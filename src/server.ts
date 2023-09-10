@@ -36,7 +36,8 @@ const io = new Server(server, {
 //@ts-ignore
 io.on("connection", (socket) => {
   console.log("USER CONNECTD", socket.id);
-  socket.on("join room", (roomID: any) => {
+  //@ts-ignore
+  socket.on("join room", (roomID) => {
     //@ts-ignore
     if (users[roomID]) {
       //@ts-ignore
@@ -51,19 +52,20 @@ io.on("connection", (socket) => {
     //@ts-ignore
     socketToRoom[socket.id] = roomID;
     //@ts-ignore
-    const usersInThisRoom = users[roomID].filter((id: any) => id !== socket.id);
+    const usersInThisRoom = users[roomID].filter((id) => id !== socket.id);
 
     socket.emit("all users", usersInThisRoom);
   });
 
-  socket.on("sending signal", (payload: any) => {
+  //@ts-ignore
+  socket.on("sending signal", (payload) => {
     io.to(payload.userToSignal).emit("user joined", {
       signal: payload.signal,
       callerID: payload.callerID,
     });
   });
-
-  socket.on("returning signal", (payload: any) => {
+  //@ts-ignore
+  socket.on("returning signal", (payload) => {
     io.to(payload.callerID).emit("receiving returned signal", {
       signal: payload.signal,
       id: socket.id,
@@ -76,7 +78,8 @@ io.on("connection", (socket) => {
     //@ts-ignore
     let room = users[roomID];
     if (room) {
-      room = room.filter((id: any) => id !== socket.id);
+      //@ts-ignore
+      room = room.filter((id) => id !== socket.id);
       //@ts-ignore
       users[roomID] = room;
     }

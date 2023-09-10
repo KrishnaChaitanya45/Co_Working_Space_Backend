@@ -5,4 +5,3 @@ const getDataURI = (file: any) => {
   return parser.format(path.extname(file.originalname).toString(), file.buffer);
 };
 module.exports = getDataURI;
-export {};

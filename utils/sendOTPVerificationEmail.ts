@@ -69,4 +69,3 @@ const sendOTPVerificationEmail = async (
 };
 
 module.exports = sendOTPVerificationEmail;
-export {};

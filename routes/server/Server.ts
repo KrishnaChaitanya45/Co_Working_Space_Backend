@@ -27,4 +27,3 @@ router
   .delete(verifyJWT, deleteServer)
   .get(verifyJWT, getServer);
 module.exports = router;
-export {};

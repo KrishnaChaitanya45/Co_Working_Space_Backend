@@ -30,4 +30,3 @@ exports.verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
     console.log(error);
   }
 };
-export {};

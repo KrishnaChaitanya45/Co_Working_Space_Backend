@@ -507,4 +507,3 @@ module.exports = {
   deleteServer,
   promoteOrDemoteUser,
 };
-export {};

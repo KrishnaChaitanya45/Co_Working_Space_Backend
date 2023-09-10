@@ -9,4 +9,3 @@ const router = express.Router();
 router.route("/profile-photo").patch(verifyJWT, uploadFile, updateProfilePhoto);
 
 module.exports = router;
-export {};

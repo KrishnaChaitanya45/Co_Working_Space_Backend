@@ -1,3 +1,4 @@
+//@ts-ignore
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -10,6 +11,7 @@ const serverRoutes = require("../routes/server/Server.ts");
 const connectToDatabase = require("../utils/connectToDb.ts");
 const cloudinary = require("cloudinary").v2;
 const http = require("http");
+//@ts-ignore
 const { Server } = require("socket.io");
 const { RoomHandler } = require("./roomHandler");
 const server = http.createServer(app);

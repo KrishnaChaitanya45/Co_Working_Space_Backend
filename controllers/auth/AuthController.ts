@@ -271,9 +271,7 @@ const verifyOTP = async (req: any, res: Response) => {
       });
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error });
+    return res.status(500).json({ message: "Internal server error", error });
   }
 };
 const resendOTP = async (req: Request, res: Response) => {
@@ -426,4 +424,3 @@ module.exports = {
   resetPassword,
   updateProfilePhoto,
 };
-export {};

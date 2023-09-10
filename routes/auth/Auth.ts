@@ -20,3 +20,4 @@ router.route("/otp/verify").post(verifyOTP);
 router.route("/otp/resend").post(resendOTP);
 router.route("/token").get(handleRefreshToken);
 module.exports = router;
+export {};

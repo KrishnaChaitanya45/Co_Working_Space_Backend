@@ -40,3 +40,4 @@ const ServerSchema = new mongoose.Schema({
 
 const Server = mongoose.model("Server", ServerSchema);
 module.exports = Server;
+export {};

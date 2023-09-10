@@ -18,3 +18,4 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model("UserOTP", UserSchema);
 module.exports = User;
+export {};

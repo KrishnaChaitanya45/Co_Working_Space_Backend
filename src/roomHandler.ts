@@ -1,5 +1,5 @@
-const { Socket } = require("socket.io");
-const { v4 } = require("uuid");
+import { Socket } from "socket.io";
+import { v4 as uuid } from "uuid";
 const rooms: Record<string, string[]> = {};
 interface Room {
   id: string;
@@ -7,7 +7,7 @@ interface Room {
 }
 export const RoomHandler = (socket: Socket) => {
   const createRoom = () => {
-    const roomId = v4();
+    const roomId = uuid();
     socket.join(roomId);
     rooms[roomId] = [];
     console.log("CREATED ", roomId);

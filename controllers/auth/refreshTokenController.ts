@@ -1,4 +1,4 @@
-const { Response } = require("express");
+import { Response } from "express";
 
 require("dotenv").config();
 const User = require("../../models/userModal.ts");
@@ -83,3 +83,4 @@ const handleRefreshToken = async (req: any, res: Response) => {
   }
 };
 module.exports = { handleRefreshToken };
+export {};

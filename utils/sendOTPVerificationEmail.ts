@@ -1,4 +1,4 @@
-const { SentMessageInfo } = require("nodemailer");
+import { SentMessageInfo } from "nodemailer";
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const nodemailer = require("nodemailer");
@@ -69,3 +69,4 @@ const sendOTPVerificationEmail = async (
 };
 
 module.exports = sendOTPVerificationEmail;
+export {};

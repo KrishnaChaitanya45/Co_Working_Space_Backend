@@ -1,4 +1,4 @@
-const { NextFunction, Request, Response } = require("express");
+import { NextFunction, Request, Response } from "express";
 
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
@@ -30,3 +30,4 @@ exports.verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
     console.log(error);
   }
 };
+export {};

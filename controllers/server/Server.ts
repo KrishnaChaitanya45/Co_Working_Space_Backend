@@ -1,24 +1,36 @@
 import { Response } from "express";
-
+const getDataURI = require("../../utils/DataURI.ts");
 require("dotenv").config();
+const cloudinary = require("cloudinary").v2;
 const User = require("../../models/userModal.ts");
 const Server = require("../../models/serverModal.ts");
 const { ObjectId } = require("mongodb");
 const { default: mongoose } = require("mongoose");
 const createServer = async (req: any, res: Response) => {
-  const { serverName, serverDescription, serverProfilePhoto } = req.body;
+  let { serverName, serverDescription } = req.body;
   const userID = req.user;
   try {
+    console.log(req.file);
     if (!serverName)
       return res.status(400).json({ message: "Server name is required" });
     const foundUser = await User.findById(userID);
     if (!foundUser) return res.status(400).json({ message: "User not found" });
     const AdminRoleId = Math.floor(Math.random() * 1000) + 9000;
+    if (!req.file)
+      return res.status(400).json({ message: "Please provide a file" });
+
+    const image = getDataURI(req.file);
+
+    const image_url = await cloudinary.uploader.upload(image.content, {
+      public_id: `CoWorkingSpace/${serverName}/profileImage`,
+      overwrite: true,
+    });
+
     const newServer = new Server({
       serverName,
       serverDescription,
-      serverProfilePhoto: serverProfilePhoto
-        ? serverProfilePhoto
+      serverProfilePhoto: req.file
+        ? image_url.secure_url
         : "https://res.cloudinary.com/deardiary/image/upload/v1693221898/DearDiary/Habits/Login_mxzaj8.png",
     });
     newServer.users.push({

@@ -10,10 +10,11 @@ const {
   promoteOrDemoteUser,
 } = require("../../controllers/server/Server.ts");
 const router = e.Router();
-const { verifyJWT } = require("../../middleware/auth/verifyJWT.ts");
+const singleUpload = require("../../middleware/auth/uploadImage");
+const { verifyJWT } = require("../../middleware/auth/verifyJWT");
 router
   .route("/")
-  .post(verifyJWT, createServer)
+  .post(singleUpload, verifyJWT, createServer)
   .get(verifyJWT, getAllServersOfUser);
 
 router.route("/get-all").get(verifyJWT, getAllServers);

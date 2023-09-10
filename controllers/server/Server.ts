@@ -1,4 +1,4 @@
-import { Response } from "express";
+const { Response } = require("express");
 
 require("dotenv").config();
 const User = require("../../models/userModal.ts");

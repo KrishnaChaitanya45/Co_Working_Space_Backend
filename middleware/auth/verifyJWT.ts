@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+const { NextFunction, Request, Response } = require("express");
 
 require("dotenv").config();
 const jwt = require("jsonwebtoken");

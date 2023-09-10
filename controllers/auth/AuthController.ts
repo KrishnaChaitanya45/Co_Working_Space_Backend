@@ -7,7 +7,7 @@ const sendOTPVerificationEmail = require("../../utils/sendOTPVerificationEmail.t
 const { ObjectId } = require("mongodb");
 const getDataURI = require("../../utils/DataURI.ts");
 const cloudinary = require("cloudinary").v2;
-import { Request, Response } from "express";
+const { Request, Response } = require("express");
 const login = async (req: Request, res: Response) => {
   try {
     const cookies = req.cookies;

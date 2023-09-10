@@ -1,4 +1,4 @@
-import { SentMessageInfo } from "nodemailer";
+const { SentMessageInfo } = require("nodemailer");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const nodemailer = require("nodemailer");

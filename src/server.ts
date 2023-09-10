@@ -11,7 +11,7 @@ const connectToDatabase = require("../utils/connectToDb.ts");
 const cloudinary = require("cloudinary").v2;
 const http = require("http");
 const { Server } = require("socket.io");
-import { RoomHandler } from "./roomHandler";
+const { RoomHandler } = require("./roomHandler");
 const server = http.createServer(app);
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

@@ -1,0 +1,32 @@
+{
+  "extends": "tslint:recommended",
+  "defaultSeverity": "warning",
+  "rules": {
+    "no-console": {
+      "severity": "warning",
+      "options": ["debug", "info", "time", "timeEnd", "trace"]
+    },
+    "no-shadowed-variable": {
+      "severity": "warning"
+    },
+    "no-unused-expression": {
+      "severity": "warning"
+    },
+    "no-empty": {
+      "severity": "warning"
+    },
+    "prefer-const": {
+      "severity": "warning"
+    },
+    "variable-name": {
+      "severity": "warning"
+    },
+    "triple-equals": {
+      "severity": "warning"
+    },
+    "no-var-requires": {
+      "severity": "warning"
+    }
+  },
+  "jsRules": {}
+}

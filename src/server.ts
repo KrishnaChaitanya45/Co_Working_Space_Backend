@@ -10,7 +10,7 @@ const serverRoutes = require("../routes/server/Server.ts");
 const connectToDatabase = require("../utils/connectToDb.ts");
 const cloudinary = require("cloudinary").v2;
 const http = require("http");
-import { Server } from "socket.io";
+const { Server } = require("socket.io");
 import { RoomHandler } from "./roomHandler";
 const server = http.createServer(app);
 cloudinary.config({

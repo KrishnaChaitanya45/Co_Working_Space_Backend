@@ -9,8 +9,8 @@
     "build": "npx tsc",
     "watch": "npx tsc -w",
     "prestart": "yarn build",
-    "start": "concurrently --kil-others \"yarn watch\" \"nodemon src/server.ts\"",
-    "dev": "nodemon server.js"
+    "start": "concurrently --kil-others \"yarn watch\" \"node src/server.ts\"",
+    "dev": "concurrently --kil-others \"yarn watch\" \"node src/server.ts\""
   },
   "author": "KrishnaChaitanya45",
   "license": "ISC",

@@ -10,7 +10,7 @@
     "watch": "npx tsc -w",
     "prestart": "yarn build",
     "start": "concurrently --kil-others \"yarn watch\" \"node src/server.ts\"",
-    "dev": "concurrently --kil-others \"yarn watch\" \"node src/server.ts\""
+    "dev": "nodemon src/server.ts"
   },
   "author": "KrishnaChaitanya45",
   "license": "ISC",

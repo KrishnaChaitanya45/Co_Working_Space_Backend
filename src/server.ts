@@ -10,8 +10,8 @@ const serverRoutes = require("../routes/server/Server.ts");
 const connectToDatabase = require("../utils/connectToDb.ts");
 const cloudinary = require("cloudinary").v2;
 const http = require("http");
-import { Server } from "socket.io";
-import { RoomHandler } from "./roomHandler";
+const { Server } = require("socket.io");
+const { RoomHandler } = require("./roomHandler");
 const server = http.createServer(app);
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -33,9 +33,9 @@ const io = new Server(server, {
     origin: "*",
   },
 });
-io.on("connection", (socket) => {
+io.on("connection", (socket: any) => {
   console.log("USER CONNECTD", socket.id);
-  socket.on("join room", (roomID) => {
+  socket.on("join room", (roomID: any) => {
     if (users[roomID]) {
       const length = users[roomID].length;
       if (length === 4) {
@@ -52,14 +52,14 @@ io.on("connection", (socket) => {
     socket.emit("all users", usersInThisRoom);
   });
 
-  socket.on("sending signal", (payload) => {
+  socket.on("sending signal", (payload: any) => {
     io.to(payload.userToSignal).emit("user joined", {
       signal: payload.signal,
       callerID: payload.callerID,
     });
   });
 
-  socket.on("returning signal", (payload) => {
+  socket.on("returning signal", (payload: any) => {
     io.to(payload.callerID).emit("receiving returned signal", {
       signal: payload.signal,
       id: socket.id,

@@ -67,7 +67,8 @@ const addToServer = async (req: any, res: Response) => {
     const foundUser = await User.findById(adminId);
     if (!foundUser)
       return res.status(400).json({ message: "Request User not found" });
-    const foundServer = await Server.findById(serverId);
+    let foundServer = await Server.findById(serverId);
+
     if (!foundServer)
       return res.status(400).json({ message: "Server not found" });
 
@@ -98,11 +99,19 @@ const addToServer = async (req: any, res: Response) => {
     );
     console.log("== IS MANAGER ==", isManager);
     if (Boolean(isAdmin) && Boolean(isManager))
-      return res.status(400).json({
+      return res.status(403).json({
+        title: "You are not Authorized ⚠️",
         message: "You don't have the access to add users to this server",
+        type: "error",
       });
     const user = await User.findById(userId);
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user)
+      return res.status(404).json({
+        title: "User not found 🔍",
+        message:
+          "We're unable to find this user, please check the details provided",
+        type: "error",
+      });
     const userAlreadyExists = foundServer.users.find(
       (u: {
         user: any;
@@ -113,7 +122,12 @@ const addToServer = async (req: any, res: Response) => {
       }) => u.user.toString() == userId
     );
     if (userAlreadyExists)
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(401).json({
+        title: "User already exists",
+        message:
+          "The user already exists in the server and you cannot add him again ",
+        type: "info",
+      });
     const roleId = Math.floor(Math.random() * 1000) + 6000;
 
     foundServer.users.push({
@@ -123,6 +137,14 @@ const addToServer = async (req: any, res: Response) => {
       },
     });
     await foundServer.save();
+    let server = await Server.find({ _id: serverId })
+      .populate("users")
+      .populate("users")
+      .populate({
+        path: "users.user",
+        model: "User",
+        select: "-password",
+      });
     const serverInfo = {
       server: serverId,
       role: {
@@ -133,12 +155,19 @@ const addToServer = async (req: any, res: Response) => {
     };
     user.servers.push(serverInfo);
     await user.save();
-    return res
-      .status(200)
-      .json({ message: "User added to server successfully" });
+    return res.status(200).json({
+      title: `Welcome ${user.displayname} to ${foundServer.serverName} 🔥`,
+      message: `${user.displayname} has been added to the server successfully and assigned with the user role`,
+      server: server[0],
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      title: "Internal server error 😢",
+      message:
+        "There is an issue from our side... we're trying to figure it out and fix it",
+      type: "error",
+    });
   }
 };
 
@@ -198,14 +227,36 @@ const updateServer = async (req: any, res: Response) => {
   try {
     const { serverId } = req.params;
     const { serverName, serverDescription } = req.body;
-    const foundServer = await Server.findById(serverId);
+    let image, image_url;
+    if (req.file) {
+      image = getDataURI(req.file);
+
+      image_url = await cloudinary.uploader.upload(image.content, {
+        public_id: `CoWorkingSpace/${serverName}/profileImage`,
+        overwrite: true,
+      });
+    }
+    let foundServer = await Server.find({ _id: serverId })
+      .populate("users")
+      .populate({
+        path: "users",
+        populate: {
+          path: "user",
+          model: "User",
+        },
+      });
+    foundServer = foundServer[0];
     if (!foundServer) {
       return res.status(400).json({ message: "Server not found" });
     }
     const user = req.user;
     if (
-      foundServer.admin.toString() !== user ||
-      foundServer.managers.find((m: string) => m.toString() !== user)
+      !foundServer.users.find((u: any) => {
+        return (
+          (u.roleId.Admin > 9000 && u.user._id.toString() == user) ||
+          (u.roleId.Manager > 8000 && u.user._id.toString() == user)
+        );
+      })
     ) {
       return res
         .status(400)
@@ -213,7 +264,22 @@ const updateServer = async (req: any, res: Response) => {
     }
     foundServer.serverName = serverName;
     foundServer.serverDescription = serverDescription;
-    await foundServer.save();
+    if (req.file) foundServer.serverProfilePhoto = image_url.secure_url;
+    if (req.file)
+      await Server.findByIdAndUpdate(foundServer._id, {
+        $set: {
+          serverName: foundServer.serverName,
+          serverDescription: foundServer.serverDescription,
+          serverProfilePhoto: foundServer.serverProfilePhoto,
+        },
+      });
+    else
+      await Server.findByIdAndUpdate(foundServer._id, {
+        $set: {
+          serverName: foundServer.serverName,
+          serverDescription: foundServer.serverDescription,
+        },
+      });
     return res
       .status(200)
       .json({ message: "Server updated successfully", server: foundServer });
@@ -274,7 +340,16 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
   try {
     const { serverId } = req.params;
     const { role, userId } = req.body;
-    const foundServer = await Server.findById(serverId);
+    let foundServer = await Server.find({ _id: serverId })
+      .populate("users")
+      .populate({
+        path: "users",
+        populate: {
+          path: "user",
+          model: "User",
+        },
+      });
+    foundServer = foundServer[0];
 
     if (!foundServer) {
       return res.status(400).json({ message: "Server not found" });
@@ -297,7 +372,7 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
       foundServer.users.length > 0 &&
       Boolean(
         foundServer.users.find(
-          (u: { user: string }) => u.user.toString() === userId
+          (u: { user: { _id: string } }) => u.user._id.toString() === userId
         )
       );
 
@@ -339,6 +414,7 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
       promoteOrDemoteUser_Role
     )[0];
     const ourUser_Role_Number: any = Object.values(ourUser_Role)[0];
+    console.log(promoteOrDemoteUser_Role_Number, ourUser_Role_Number);
     if (ourUser_Role_Number < promoteOrDemoteUser_Role_Number) {
       return res
         .status(400)
@@ -354,7 +430,7 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
       if (Object.keys(role)[0] == "Lead" && Object.values(role)[0] > 7000) {
         if (
           foundServer.users.find(
-            (u: { user: string }) => u.user.toString() === userId
+            (u: { user: { _id: string } }) => u.user._id.toString() === userId
           ).roleId.Lead > 7000
         ) {
           return res.status(400).json({ message: "User is already a lead" });
@@ -377,19 +453,24 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
         });
         foundServer.users.find(
           (u: any) =>
-            u.user.toString() === userToPromoteOrDemote[0]._id.toString()
-        ).roleId.Lead = LeadId;
+            u.user._id.toString() === userToPromoteOrDemote[0]._id.toString()
+        ).roleId = { Lead: LeadId };
 
-        await foundServer.save();
+        await Server.findByIdAndUpdate(foundServer._id, {
+          $set: {
+            users: foundServer.users,
+          },
+        });
         return res.status(200).json({
-          title: "User Promoted To Lead ✅",
-          message: "User promoted to Lead Successfully ",
+          title: `${userToPromoteOrDemote[0].displayname} Promoted To Lead ✅`,
+          message: `${userToPromoteOrDemote[0].displayname} promoted to Lead Successfully `,
+          server: foundServer,
         });
       }
       // @ts-ignore
       if (Object.keys(role)[0] == "User" && Object.values(role)[0] < 7000) {
         if (
-          foundServer.users.find((u: any) => u.user.toString() === userId)
+          foundServer.users.find((u: any) => u.user._id.toString() === userId)
             .roleId.User > 6000
         ) {
           return res.status(400).json({ message: "User is already a User" });
@@ -405,14 +486,68 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
         });
         foundServer.users.find(
           (u: any) =>
-            u.user.toString() === userToPromoteOrDemote[0]._id.toString()
-        ).roleId.User = UserId;
+            u.user._id.toString() === userToPromoteOrDemote[0]._id.toString()
+        ).roleId = { User: UserId };
 
-        await foundServer.save();
+        await Server.findByIdAndUpdate(foundServer._id, {
+          $set: {
+            users: foundServer.users,
+          },
+        });
         return res.status(200).json({
           title: "User Demoted To User ✅",
           message: "User Demoted to User Successfully",
+          server: foundServer,
         });
+      }
+      //@ts-ignore
+
+      //@ts-ignore
+      if (Object.keys(role)[0] == "Remove" && Object.values(role)[0] < 6000) {
+        try {
+          console.log("REACHED HERE 1");
+          userToPromoteOrDemote[0].servers =
+            userToPromoteOrDemote[0].servers.filter(
+              (s: any) => s.server._id.toString() !== serverId
+            );
+          console.log("REACHED HERE 2");
+          await User.findByIdAndUpdate(userToPromoteOrDemote[0]._id, {
+            $set: {
+              servers: userToPromoteOrDemote[0].servers,
+            },
+          });
+          console.log(
+            "REACHED HERE 3",
+            foundServer.users,
+            userToPromoteOrDemote
+          );
+          console.log("REACHED HERE 3.1", foundServer.users.length);
+
+          foundServer.users = foundServer.users.filter(
+            (u: any) =>
+              u.user._id.toString() !== userToPromoteOrDemote[0]._id.toString()
+          );
+          console.log("REACHED HERE 3.2", foundServer.users.length);
+
+          console.log("REACHED HERE 4");
+          const updatedServer = await Server.findByIdAndUpdate(
+            foundServer._id,
+            {
+              $set: {
+                users: foundServer.users,
+              },
+            }
+          );
+          console.log("REACHED HERE 5");
+          return res.status(200).json({
+            title: `${ourUser.displayname} Removed ${userToPromoteOrDemote[0].displayname} From ${foundServer.serverName}✅`,
+            message: `${userToPromoteOrDemote[0].displayname} Removed from the server Successfully`,
+            removedUser: userToPromoteOrDemote[0],
+            server: foundServer,
+          });
+        } catch (error) {
+          console.log("ERROR", error);
+        }
       }
     } else {
       return res
@@ -423,6 +558,19 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
       // @ts-ignore
       if (Object.values(role)[0] >= 9000 && Object.keys(role)[0] == "Admin") {
         const AdminId = Math.floor(Math.random() * 1000) + 9000;
+
+        if (
+          foundServer.users.find(
+            (u: any) => u.user._id.toString() === ourUser._id.toString()
+          ).roleId.Admin < 9000
+        ) {
+          return res.status(400).json({
+            title: "You cannot promote the user to admin",
+            message: "You are not an admin of this server",
+            type: "error",
+          });
+        }
+
         userToPromoteOrDemote[0].servers.find(
           (s: any) => s.server._id.toString() === serverId
         ).role.id = { Admin: AdminId };
@@ -443,64 +591,81 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
         });
         foundServer.users.find(
           (u: any) =>
-            u.user.toString() === userToPromoteOrDemote[0]._id.toString()
-        ).roleId.Admin = AdminId;
+            u.user._id.toString() === userToPromoteOrDemote[0]._id.toString()
+        ).roleId = { Admin: AdminId };
         foundServer.users.find(
-          (u: any) => u.user.toString() === ourUser._id.toString()
-        ).roleId.Manager = roleId;
+          (u: any) => u.user._id.toString() === ourUser._id.toString()
+        ).roleId = { Manager: roleId };
 
-        await foundServer.save();
+        await Server.findByIdAndUpdate(foundServer._id, {
+          $set: {
+            users: foundServer.users,
+          },
+        });
         return res.status(200).json({
-          title: "User Promoted, You are Demoted 😅",
-          message:
-            "User promoted to Admin Successfully and you are demoted to manager",
+          title: `${userToPromoteOrDemote[0].displayname}  Promoted, You are Demoted 😅`,
+          message: `${userToPromoteOrDemote[0].displayname}  promoted to Admin Successfully and you are demoted to manager`,
+          server: foundServer,
         });
       }
       // @ts-ignore
       if (Object.values(role)[0] >= 8000 && Object.keys(role)[0] == "Manager") {
-        const isUserAlreadyManager =
+        try {
+          const isUserAlreadyManager =
+            foundServer.users.find(
+              (u: any) =>
+                u.user._id.toString() === userId && u.roleId.Manager > 8000
+            ) &&
+            userToPromoteOrDemote[0].servers.find(
+              (s: any) => s.server._id.toString() === serverId
+            ).role.id.Manager > 8000;
+          if (isUserAlreadyManager) {
+            return res
+              .status(400)
+              .json({ message: "User is already a manager" });
+          }
+          if (promoteOrDemoteUser_Role_Number > 8000) {
+            return res
+              .status(400)
+              .json({ message: "The user is already a manager" });
+          }
+          const managers = foundServer.users.filter(
+            (u: any) => u.roleId.Manager > 8000
+          );
+          if (managers.length == 2) {
+            return res
+              .status(400)
+              .json({ message: "Only 2 managers are allowed" });
+          }
+          const roleId = Math.floor(Math.random() * 1000) + 8000;
+          // console.log(userToPromoteOrDemote[0].servers);
+          const serverToUpdateRole = userToPromoteOrDemote[0].servers.find(
+            (s: any) => s.server._id.toString() === foundServer._id.toString()
+          );
+          serverToUpdateRole.role.id = { Manager: roleId };
+          console.log(userToPromoteOrDemote[0].servers[0].role);
+          // console.log("== FOUND Server==", foundServer);
+
           foundServer.users.find(
-            (u: any) => u.user.toString() === userId && u.roleId.Manager > 8000
-          ) &&
-          userToPromoteOrDemote[0].servers.find(
-            (s: any) => s.server._id.toString() === serverId
-          ).role.id.Manager > 8000;
-        if (isUserAlreadyManager) {
-          return res.status(400).json({ message: "User is already a manager" });
-        }
-        if (promoteOrDemoteUser_Role_Number > 8000) {
+            (u: any) =>
+              u.user._id.toString() === userToPromoteOrDemote[0]._id.toString()
+          ).roleId = { Manager: roleId };
+          await foundServer.save();
+          await User.findByIdAndUpdate(userToPromoteOrDemote[0]._id, {
+            $set: {
+              servers: userToPromoteOrDemote[0].servers,
+            },
+          });
+          return res.status(200).json({
+            title: `${userToPromoteOrDemote[0].displayname} Promoted To Manager ✅`,
+            message: `${userToPromoteOrDemote[0].displayname} promoted to Manager Successfully `,
+            server: foundServer,
+          });
+        } catch (error) {
           return res
-            .status(400)
-            .json({ message: "The user is already a manager" });
+            .status(500)
+            .json({ message: "PROMOTING TO MANAGER FAILED" });
         }
-        const managers = foundServer.users.filter(
-          (u: any) => u.roleId.Manager > 8000
-        );
-        if (managers.length == 2) {
-          return res
-            .status(400)
-            .json({ message: "Only 2 managers are allowed" });
-        }
-        const roleId = Math.floor(Math.random() * 1000) + 8000;
-        // console.log(userToPromoteOrDemote[0].servers);
-        const serverToUpdateRole = userToPromoteOrDemote[0].servers.find(
-          (s: any) => s.server._id.toString() === foundServer._id.toString()
-        );
-        serverToUpdateRole.role.id = { Manager: roleId };
-        console.log(userToPromoteOrDemote[0].servers[0].role);
-        foundServer.users.find(
-          (u: any) =>
-            u.user.toString() === userToPromoteOrDemote[0]._id.toString()
-        ).roleId = { Manager: roleId };
-        await foundServer.save();
-        await User.findByIdAndUpdate(userToPromoteOrDemote[0]._id, {
-          $set: {
-            servers: userToPromoteOrDemote[0].servers,
-          },
-        });
-        return res
-          .status(200)
-          .json({ message: "User promoted to Manager Successfully" });
       }
     }
   } catch (error) {

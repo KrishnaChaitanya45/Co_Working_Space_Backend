@@ -33,7 +33,48 @@ const io = new Server(server, {
     origin: "*",
   },
 });
-io.on("connection", (socket: any) => {
+const callsAndChats = io.of("/calls-and-chats");
+const RealTimeUpdates = io.of("/realtime-updates");
+RealTimeUpdates.on("connection", (socket: any) => {
+  socket.join("In-App-Updates");
+  socket.on("in-app-updates", (payload: any) => {
+    const { servers, selectedServer, message } = payload;
+    socket
+      .to("In-App-Updates")
+      .emit("in-app-updates-notify", { servers, selectedServer, message });
+  });
+  socket.on("join-server", (payload: any) => {
+    const { serverId } = payload;
+    console.log("JOINED", serverId);
+    socket.join(serverId);
+  });
+  socket.on("user-promoted", (payload: any) => {
+    const { serverId, server, message } = payload;
+    socket.to(serverId).emit("user-promoted-notify", { server, message });
+  });
+
+  socket.on("user-removed", (payload: any) => {
+    const { serverId, server, message, removedUser } = payload;
+    socket
+      .in(serverId)
+      .emit("user-removed-notify", { server, message, serverId, removedUser });
+  });
+  socket.on("leave-server", (serverId: any) => {
+    socket.leave(serverId);
+  });
+
+  socket.on("group-det-changed", (payload: any) => {
+    const { serverId, server } = payload;
+    console.log(serverId, server);
+    socket.to(serverId).emit("group-det-changed-update", { server });
+  });
+
+  socket.on("user-added", (payload: any) => {
+    const { serverId, server, message } = payload;
+    socket.to(serverId).emit("user-added-notify", { server, message });
+  });
+});
+callsAndChats.on("connection", (socket: any) => {
   console.log("USER CONNECTD", socket.id);
   socket.on("join room", (roomID: any) => {
     if (users[roomID]) {

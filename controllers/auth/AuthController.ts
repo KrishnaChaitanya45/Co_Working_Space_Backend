@@ -415,6 +415,24 @@ const updateProfilePhoto = async (req: any, res: Response) => {
   }
 };
 
+const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const { username } = req.query;
+    let query = username
+      ? {
+          username: { $regex: username, $options: "i" },
+        }
+      : {};
+    const users = await User.find(query).select("-password");
+    return res.status(200).json({ users });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error });
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -422,6 +440,7 @@ module.exports = {
   verifyOTP,
   resendOTP,
   resetPassword,
+  getAllUsers,
   updateProfilePhoto,
 };
 export {};

@@ -24,7 +24,7 @@ router
 router
   .route("/:serverId")
   .post(verifyJWT, addToServer)
-  .patch(verifyJWT, updateServer)
+  .patch(singleUpload, verifyJWT, updateServer)
   .delete(verifyJWT, deleteServer)
   .get(verifyJWT, getServer);
 module.exports = router;

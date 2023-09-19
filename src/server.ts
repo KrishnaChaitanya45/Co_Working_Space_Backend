@@ -5,6 +5,8 @@ require("dotenv").config();
 const userRoutes = require("../routes/user/User.ts");
 const cookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 5000;
+const channelRoutes = require("../routes/channels/channels.ts");
+const messageRoutes = require("../routes/messages/messages.ts");
 const authRoutes = require("../routes/auth/Auth.ts");
 const serverRoutes = require("../routes/server/Server.ts");
 const connectToDatabase = require("../utils/connectToDb.ts");
@@ -73,26 +75,44 @@ RealTimeUpdates.on("connection", (socket: any) => {
     const { serverId, server, message } = payload;
     socket.to(serverId).emit("user-added-notify", { server, message });
   });
+
+  socket.on("channel-created", (payload: any) => {
+    const { server, serverId, message, channel } = payload;
+    console.log("CHANNEL CREATED", serverId, server);
+    socket
+      .to(serverId)
+      .emit("channel-created-notify", { server, message, channel });
+  });
+
+  socket.on("channel-requested", (payload: any) => {
+    const { serverId, server, request, channelName } = payload;
+    socket.to(serverId).emit("channel-requested-notify", {
+      serverId,
+      request,
+      channel: channelName,
+    });
+  });
+  socket.on("channel-accepted-or-rejected", (payload: any) => {
+    const { serverId, server, request, action, channelName } = payload;
+    socket.to(serverId).emit("channel-accepted-or-rejected-notify", {
+      serverId,
+      request,
+      action,
+      channelName,
+    });
+  });
 });
 callsAndChats.on("connection", (socket: any) => {
   console.log("USER CONNECTD", socket.id);
-  socket.on("join room", (roomID: any) => {
-    if (users[roomID]) {
-      const length = users[roomID].length;
-      if (length === 4) {
-        socket.emit("room full");
-        return;
-      }
-      users[roomID].push(socket.id);
-    } else {
-      users[roomID] = [socket.id];
-    }
-    socketToRoom[socket.id] = roomID;
-    const usersInThisRoom = users[roomID].filter((id: any) => id !== socket.id);
 
-    socket.emit("all users", usersInThisRoom);
+  socket.on("join-room", (roomID: any) => {
+    socket.join(roomID);
+    console.log("ROOM ID", roomID);
   });
-
+  socket.on("send-message", (payload: any) => {
+    console.log("MESSAGE RECEIVED", payload);
+    socket.to(payload.channelId).emit("message-received", payload);
+  });
   socket.on("sending signal", (payload: any) => {
     io.to(payload.userToSignal).emit("user joined", {
       signal: payload.signal,
@@ -118,6 +138,8 @@ callsAndChats.on("connection", (socket: any) => {
 });
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/channel", channelRoutes);
+app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/server", serverRoutes);
 const start = async () => {
   try {

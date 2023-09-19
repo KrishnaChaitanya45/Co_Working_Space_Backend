@@ -1,10 +1,26 @@
 const mongoose = require("mongoose");
 
-const ServerSchema = new mongoose.Schema({
+const ChannelSchema = new mongoose.Schema({
   isTextChannel: {
     type: Boolean,
     default: false,
   },
+  restrictAccess: {
+    type: Boolean,
+    default: false,
+  },
+  requests: [
+    {
+      user: {
+        ref: "User",
+        type: mongoose.Schema.Types.ObjectId,
+      },
+      message: {
+        type: String,
+        default: "I want to join this channel",
+      },
+    },
+  ],
   channelName: {
     type: String,
     default: "",
@@ -25,8 +41,13 @@ const ServerSchema = new mongoose.Schema({
   },
   users: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      user: {
+        ref: "User",
+        type: mongoose.Schema.Types.ObjectId,
+      },
+      roleId: {
+        type: Object,
+      },
     },
   ],
   latestMessage: {
@@ -39,6 +60,5 @@ const ServerSchema = new mongoose.Schema({
   },
 });
 
-const Server = mongoose.model("Server", ServerSchema);
-module.exports = Server;
-export {};
+const Channel = mongoose.model("Channel", ChannelSchema);
+export = Channel;

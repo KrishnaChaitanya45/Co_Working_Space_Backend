@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-exports.verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
+const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -30,4 +30,4 @@ exports.verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
     console.log(error);
   }
 };
-export {};
+export { verifyJWT };

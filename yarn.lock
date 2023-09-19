@@ -118,6 +118,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/cookie-parser@^1.4.4":
+  version "1.4.4"
+  resolved "https://registry.npmjs.org/@types/cookie-parser/-/cookie-parser-1.4.4.tgz"
+  integrity sha512-Var+aj5I6ZgIqsQ05N2V8q5OBrFfZXtIGWWDSrEYLIbMw758obagSwdGcLCjwh1Ga7M7+wj0SDIAaAC/WT7aaA==
+  dependencies:
+    "@types/express" "*"
+
 "@types/cookie@^0.4.1":
   version "0.4.1"
   resolved "https://registry.npmjs.org/@types/cookie/-/cookie-0.4.1.tgz"
@@ -140,7 +147,7 @@
     "@types/range-parser" "*"
     "@types/send" "*"
 
-"@types/express@^4.17.17":
+"@types/express@*", "@types/express@^4.17.17":
   version "4.17.17"
   resolved "https://registry.npmjs.org/@types/express/-/express-4.17.17.tgz"
   integrity sha512-Q4FmmuLGBG58btUnfS1c1r/NQdlp3DMfGDGig8WhfpA2YRUtEkxAjkZb0yvplJGYdF1fsQ81iMDcH24sSCNC/Q==

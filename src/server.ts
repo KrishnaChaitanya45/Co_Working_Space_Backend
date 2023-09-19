@@ -1,55 +1,69 @@
-const express = require("express");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import userRoutes from "../routes/user/User";
+import cookieParser from "cookie-parser";
+import http from "http";
+import { Server } from "socket.io";
+import { RoomHandler } from "./roomHandler";
+import connectToDatabase from "../utils/connectToDb";
+import cloudinary from "cloudinary";
+dotenv.config();
+
 const app = express();
-const cors = require("cors");
-require("dotenv").config();
-const userRoutes = require("../routes/user/User.ts");
-const cookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 5000;
+
 const channelRoutes = require("../routes/channels/channels.ts");
 const messageRoutes = require("../routes/messages/messages.ts");
 const authRoutes = require("../routes/auth/Auth.ts");
 const serverRoutes = require("../routes/server/Server.ts");
-const connectToDatabase = require("../utils/connectToDb.ts");
-const cloudinary = require("cloudinary").v2;
-const http = require("http");
-const { Server } = require("socket.io");
-const { RoomHandler } = require("./roomHandler");
-const server = http.createServer(app);
+//@ts-ignore
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 app.use(
   cors({
     origin: ["http://localhost:3000"],
     credentials: true,
   })
 );
+
 const users: any = {};
 const socketToRoom: any = {};
+
 app.use(express.json());
 app.use(cookieParser());
+
+const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
+
 const callsAndChats = io.of("/calls-and-chats");
 const RealTimeUpdates = io.of("/realtime-updates");
+
 RealTimeUpdates.on("connection", (socket: any) => {
   socket.join("In-App-Updates");
+
   socket.on("in-app-updates", (payload: any) => {
     const { servers, selectedServer, message } = payload;
     socket
       .to("In-App-Updates")
       .emit("in-app-updates-notify", { servers, selectedServer, message });
   });
+
   socket.on("join-server", (payload: any) => {
     const { serverId } = payload;
     console.log("JOINED", serverId);
     socket.join(serverId);
   });
+
   socket.on("user-promoted", (payload: any) => {
     const { serverId, server, message } = payload;
     socket.to(serverId).emit("user-promoted-notify", { server, message });
@@ -61,6 +75,7 @@ RealTimeUpdates.on("connection", (socket: any) => {
       .in(serverId)
       .emit("user-removed-notify", { server, message, serverId, removedUser });
   });
+
   socket.on("leave-server", (serverId: any) => {
     socket.leave(serverId);
   });
@@ -92,6 +107,7 @@ RealTimeUpdates.on("connection", (socket: any) => {
       channel: channelName,
     });
   });
+
   socket.on("channel-accepted-or-rejected", (payload: any) => {
     const { serverId, server, request, action, channelName } = payload;
     socket.to(serverId).emit("channel-accepted-or-rejected-notify", {
@@ -102,17 +118,20 @@ RealTimeUpdates.on("connection", (socket: any) => {
     });
   });
 });
+
 callsAndChats.on("connection", (socket: any) => {
-  console.log("USER CONNECTD", socket.id);
+  console.log("USER CONNECTED", socket.id);
 
   socket.on("join-room", (roomID: any) => {
     socket.join(roomID);
     console.log("ROOM ID", roomID);
   });
+
   socket.on("send-message", (payload: any) => {
     console.log("MESSAGE RECEIVED", payload);
     socket.to(payload.channelId).emit("message-received", payload);
   });
+
   socket.on("sending signal", (payload: any) => {
     io.to(payload.userToSignal).emit("user joined", {
       signal: payload.signal,
@@ -136,19 +155,23 @@ callsAndChats.on("connection", (socket: any) => {
     }
   });
 });
+
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/channel", channelRoutes);
 app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/server", serverRoutes);
+
 const start = async () => {
   try {
+    //@ts-ignore
     await connectToDatabase(process.env.MONGO_URI);
     console.log("Connected to Database..!");
     server.listen(PORT);
   } catch (error) {
-    console.log("working offline..!", error);
+    console.log("Working offline..!", error);
     server.listen(PORT);
   }
 };
+
 start();

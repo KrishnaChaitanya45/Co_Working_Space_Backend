@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const ServerSchema = new mongoose.Schema({
   createdAt: {
     type: Date,

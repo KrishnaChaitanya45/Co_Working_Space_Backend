@@ -8,10 +8,11 @@ const {
   getServer,
   getAllServers,
   promoteOrDemoteUser,
-} = require("../../controllers/server/Server.ts");
+} = require("../../controllers/server/Server");
 const router = e.Router();
 const singleUpload = require("../../middleware/auth/uploadImage");
 const { verifyJWT } = require("../../middleware/auth/verifyJWT");
+
 router
   .route("/")
   .post(singleUpload, verifyJWT, createServer)
@@ -28,4 +29,4 @@ router
   .delete(verifyJWT, deleteServer)
   .get(verifyJWT, getServer);
 module.exports = router;
-export {};
+export = router;

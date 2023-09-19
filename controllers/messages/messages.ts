@@ -1,10 +1,12 @@
-import Message from "../../models/messages";
-import Channel from "../../models/channelModal";
-import { Request, Response } from "express";
-import User from "../../models/userModal";
-import getDataURI from "../../utils/DataURI";
-import Server from "../../models/serverModal";
-const sendMessage = async (req: any, res: Response) => {
+const Message = require("../../models/messages");
+const Channel = require("../../models/channelModal");
+const cloudinaryV2 = require("cloudinary");
+const cloudinary = cloudinaryV2.v2;
+const User = require("../../models/userModal");
+const getDataURI = require("../../utils/DataURI");
+const Server = require("../../models/serverModal");
+
+const sendMessage = async (req: any, res: any) => {
   try {
     const { message, media } = req.body;
     console.log("== MESSAGE ==", message);
@@ -79,6 +81,7 @@ const sendMessage = async (req: any, res: Response) => {
       });
     }
     console.log("FETCHED SERVER", fetchServer[0].users);
+    // @ts-ignore
     const userRole = fetchServer[0].users.find(
       (user: any) => user.user._id.toString() === foundUser[0]._id.toString()
     ).roleId;
@@ -100,7 +103,7 @@ const sendMessage = async (req: any, res: Response) => {
     }
     let image_url = null;
     if (req.file) {
-      const image = getDataURI(req.file);
+      const image = getDataURI(req.file) as any;
 
       image_url = await cloudinary.uploader.upload(image.content, {
         public_id: `CoWorkingSpace/${foundChannel[0].channelName}/media`,
@@ -110,7 +113,7 @@ const sendMessage = async (req: any, res: Response) => {
 
     const createdMessage = await Message.create({
       sender: foundUser[0]._id,
-      message: message,
+      message,
       media: req.file && image_url && image_url.secure_url,
       channel: foundChannel[0]._id,
     });
@@ -143,7 +146,7 @@ const sendMessage = async (req: any, res: Response) => {
   }
 };
 
-const getMessages = async (req: any, res: Response) => {
+const getMessages = async (req: any, res: any) => {
   try {
     const { channelId } = req.params;
     if (!req.user) {
@@ -176,7 +179,7 @@ const getMessages = async (req: any, res: Response) => {
       title: "Messages Fetched",
       msg: "Messages fetched successfully",
       type: "success",
-      messages: messages,
+      messages,
     });
   } catch (error) {
     console.log(error);

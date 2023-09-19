@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema({
     createdAt: {
@@ -16,4 +15,5 @@ const UserSchema = new mongoose.Schema({
     },
 });
 const User = mongoose.model("UserOTP", UserSchema);
+module.exports = User;
 module.exports = User;

@@ -1,14 +1,14 @@
-const User = require("../../models/userModal.ts");
+const User = require("../../models/userModal");
 const bcrypt = require("bcryptjs");
-require("dotenv").config();
-const UserOTPVerification = require("../../models/userOTPVerification.ts");
+const dotenv = require("dotenv");
+dotenv.config();
+const UserOTPVerification = require("../../models/userOTPVerification");
 const jwt = require("jsonwebtoken");
-const sendOTPVerificationEmail = require("../../utils/sendOTPVerificationEmail.ts");
-const { ObjectId } = require("mongodb");
-const getDataURI = require("../../utils/DataURI.ts");
-const cloudinary = require("cloudinary").v2;
-import { Request, Response } from "express";
-const login = async (req: Request, res: Response) => {
+const sendOTPVerificationEmail = require("../../utils/sendOTPVerificationEmail");
+const getDataURI = require("../../utils/DataURI");
+const cloudinaryV2 = require("cloudinary");
+const cloudinary = cloudinaryV2.v2;
+const login = async (req: any, res: any) => {
   try {
     const cookies = req.cookies;
 
@@ -18,7 +18,7 @@ const login = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "Please provide an email and password" });
     }
-    let user;
+    let user = undefined as any;
     user = await User.findOne({ email: emailOrUsername });
     if (!user) {
       user = await User.findOne({ username: emailOrUsername });
@@ -32,14 +32,15 @@ const login = async (req: Request, res: Response) => {
     }
     const accessToken = jwt.sign(
       { id: user._id },
-      process.env.ACCESS_TOKEN_SECRET,
+
+      process.env.ACCESS_TOKEN_SECRET!,
       {
         expiresIn: "30m",
       }
     );
     const newRefreshToken = jwt.sign(
       { id: user._id },
-      process.env.REFRESH_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET!,
       {
         expiresIn: "15d",
       }
@@ -79,7 +80,7 @@ const login = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
-const register = async (req: Request, res: Response) => {
+const register = async (req: any, res: any) => {
   try {
     const { email, displayname, password, username } = req.body;
     if (!email || !displayname || !password || !username) {
@@ -103,23 +104,25 @@ const register = async (req: Request, res: Response) => {
       username,
     });
     try {
+      // @ts-ignore
       await sendOTPVerificationEmail(email, newUser._id, displayname);
     } catch (error) {}
     console.log(newUser._id);
     const accessToken = jwt.sign(
       { id: newUser._id },
-      process.env.ACCESS_TOKEN_SECRET,
+      process.env.ACCESS_TOKEN_SECRET!,
       {
         expiresIn: "30m",
       }
     );
     const refreshToken = jwt.sign(
       { id: newUser._id },
-      process.env.REFRESH_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET!,
       {
         expiresIn: "15d",
       }
     );
+    // @ts-ignore
     newUser.refreshToken = refreshToken;
 
     await newUser.save();
@@ -147,7 +150,7 @@ const register = async (req: Request, res: Response) => {
   }
 };
 
-const logout = async (req: Request, res: Response) => {
+const logout = async (req: any, res: any) => {
   try {
     // TODO delete the accessToken from the client
     const cookies = req.cookies;
@@ -176,7 +179,7 @@ const logout = async (req: Request, res: Response) => {
   }
 };
 
-const verifyOTP = async (req: any, res: Response) => {
+const verifyOTP = async (req: any, res: any) => {
   try {
     let { otp, userId, forResetPassword, usernameOrEmail } = req.body;
     console.log(req.user);
@@ -206,7 +209,7 @@ const verifyOTP = async (req: any, res: Response) => {
     }
     const { expiresAt } = userOTP;
     const hashedOTP = userOTP.otp;
-
+    // @ts-ignore
     if (Date.now() > expiresAt && !forResetPassword) {
       await UserOTPVerification.deleteMany({
         user: req.user ? req.user : userId,
@@ -215,6 +218,7 @@ const verifyOTP = async (req: any, res: Response) => {
         title: "OTP expired",
         message: "Oops..! 😢, OTP time exhausted..! try to resend a new otp",
       });
+      // @ts-ignore
     } else if (Date.now() > expiresAt && forResetPassword) {
       await UserOTPVerification.deleteMany({
         $or: [{ user: usernameOrEmail }],
@@ -225,6 +229,7 @@ const verifyOTP = async (req: any, res: Response) => {
       });
     }
     otp = otp.toString();
+    // @ts-ignore
     const validOTP = await bcrypt.compare(otp, hashedOTP);
     console.log(validOTP);
     if (!validOTP) {
@@ -274,7 +279,7 @@ const verifyOTP = async (req: any, res: Response) => {
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
-const resendOTP = async (req: Request, res: Response) => {
+const resendOTP = async (req: any, res: any) => {
   // @ts-ignore
   const id = req.user;
   const userId = req.body.userId;
@@ -295,7 +300,7 @@ const resendOTP = async (req: Request, res: Response) => {
 
   if (!user) {
     return res.status(400).json({
-      message: "The User credentials provided with the request are invalid..!",
+      message: "The User credentials provided with the any are invalid..!",
       title: "Invalid User Details",
     });
   }
@@ -308,7 +313,7 @@ const resendOTP = async (req: Request, res: Response) => {
       });
     }
   }
-  const subject = "Password Change Request ⭐";
+  const subject = "Password Change any ⭐";
   const message =
     "Here is your otp for verification for changing your password 😄";
   // @ts-ignore
@@ -321,6 +326,7 @@ const resendOTP = async (req: Request, res: Response) => {
       message,
     };
     if (userIdForReq) {
+      // @ts-ignore
       await sendOTPVerificationEmail(email, userIdForReq, displayname, body);
       return res.status(200).json({
         title: "OTP sent successfully",
@@ -333,6 +339,7 @@ const resendOTP = async (req: Request, res: Response) => {
         message,
       };
       await sendOTPVerificationEmail(
+        // @ts-ignore
         email,
         userIdForReq,
         displayname,
@@ -351,7 +358,7 @@ const resendOTP = async (req: Request, res: Response) => {
   }
 };
 
-const resetPassword = async (req: Request, res: Response) => {
+const resetPassword = async (req: any, res: any) => {
   try {
     const { userId, password, confirmPassword } = req.body;
     console.log(userId);
@@ -386,7 +393,7 @@ const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-const updateProfilePhoto = async (req: any, res: Response) => {
+const updateProfilePhoto = async (req: any, res: any) => {
   try {
     console.log("REQ USER ", req.user);
 
@@ -394,7 +401,7 @@ const updateProfilePhoto = async (req: any, res: Response) => {
     if (!req.file)
       return res.status(400).json({ message: "Please provide a file" });
 
-    const image = getDataURI(req.file);
+    const image = getDataURI(req.file) as any;
     const user = await User.findById(req.user);
     if (!user) return res.status(400).json({ message: "User not found" });
 
@@ -415,10 +422,10 @@ const updateProfilePhoto = async (req: any, res: Response) => {
   }
 };
 
-const getAllUsers = async (req: Request, res: Response) => {
+const getAllUsers = async (req: any, res: any) => {
   try {
     const { username } = req.query;
-    let query = username
+    const query = username
       ? {
           username: { $regex: username, $options: "i" },
         }
@@ -427,9 +434,7 @@ const getAllUsers = async (req: Request, res: Response) => {
     return res.status(200).json({ users });
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error: error });
+    return res.status(500).json({ message: "Internal server error", error });
   }
 };
 
@@ -443,4 +448,13 @@ module.exports = {
   getAllUsers,
   updateProfilePhoto,
 };
-export {};
+export {
+  login,
+  register,
+  logout,
+  verifyOTP,
+  resendOTP,
+  resetPassword,
+  getAllUsers,
+  updateProfilePhoto,
+};

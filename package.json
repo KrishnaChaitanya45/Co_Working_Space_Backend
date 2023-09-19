@@ -8,8 +8,7 @@
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
     "build": "npx tsc",
     "watch": "npx tsc -w",
-    "prestart": "yarn build",
-    "start": "concurrently --kil-others \"yarn watch\" \"node src/server.ts\"",
+    "start": "node dist/src/server.js",
     "dev": "nodemon src/server.ts"
   },
   "author": "KrishnaChaitanya45",
@@ -39,7 +38,9 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.4",
     "@types/cookie-parser": "^1.4.4",
+    "@types/jsonwebtoken": "^9.0.3",
     "concurrently": "^8.2.1"
   }
 }

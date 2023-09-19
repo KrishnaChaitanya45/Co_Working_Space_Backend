@@ -1,12 +1,12 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const e = require("express");
-const { createServer, addToServer, getAllServersOfUser, deleteServer, updateServer, getServer, getAllServers, promoteOrDemoteUser, } = require("../../controllers/server/Server.ts");
+const { createServer, addToServer, getAllServersOfUser, deleteServer, updateServer, getServer, getAllServers, promoteOrDemoteUser, } = require("../../controllers/server/Server");
 const router = e.Router();
-const { verifyJWT } = require("../../middleware/auth/verifyJWT.ts");
+const singleUpload = require("../../middleware/auth/uploadImage");
+const { verifyJWT } = require("../../middleware/auth/verifyJWT");
 router
     .route("/")
-    .post(verifyJWT, createServer)
+    .post(singleUpload, verifyJWT, createServer)
     .get(verifyJWT, getAllServersOfUser);
 router.route("/get-all").get(verifyJWT, getAllServers);
 router
@@ -15,7 +15,8 @@ router
 router
     .route("/:serverId")
     .post(verifyJWT, addToServer)
-    .patch(verifyJWT, updateServer)
+    .patch(singleUpload, verifyJWT, updateServer)
     .delete(verifyJWT, deleteServer)
     .get(verifyJWT, getServer);
+module.exports = router;
 module.exports = router;

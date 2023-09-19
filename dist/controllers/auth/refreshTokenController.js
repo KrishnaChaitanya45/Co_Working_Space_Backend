@@ -9,9 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv").config();
-const User = require("../../models/userModal.ts");
+exports.handleRefreshToken = void 0;
 const jwt = require("jsonwebtoken");
+const User = require("../../models/userModal");
+const dotenv = require("dotenv");
+dotenv.config();
 const handleRefreshToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const cookies = req.cookies;
@@ -70,4 +72,5 @@ const handleRefreshToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
         console.log(error);
     }
 });
+exports.handleRefreshToken = handleRefreshToken;
 module.exports = { handleRefreshToken };

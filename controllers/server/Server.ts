@@ -1,13 +1,13 @@
-import { Response } from "express";
-const getDataURI = require("../../utils/DataURI.ts");
-require("dotenv").config();
-const cloudinary = require("cloudinary").v2;
-const User = require("../../models/userModal.ts");
-const Server = require("../../models/serverModal.ts");
-const { ObjectId } = require("mongodb");
-const { default: mongoose } = require("mongoose");
-const createServer = async (req: any, res: Response) => {
-  let { serverName, serverDescription } = req.body;
+const getDataURI = require("../../utils/DataURI");
+const User = require("../../models/userModal");
+const dotenv = require("dotenv");
+dotenv.config();
+const cloudinaryV2 = require("cloudinary");
+const cloudinary = cloudinaryV2.v2;
+const Server = require("../../models/serverModal");
+
+const createServer = async (req: any, res: any) => {
+  const { serverName, serverDescription } = req.body;
   const userID = req.user;
   try {
     console.log(req.file);
@@ -19,7 +19,7 @@ const createServer = async (req: any, res: Response) => {
     if (!req.file)
       return res.status(400).json({ message: "Please provide a file" });
 
-    const image = getDataURI(req.file);
+    const image = getDataURI(req.file) as any;
 
     const image_url = await cloudinary.uploader.upload(image.content, {
       public_id: `CoWorkingSpace/${serverName}/profileImage`,
@@ -59,7 +59,7 @@ const createServer = async (req: any, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-const addToServer = async (req: any, res: Response) => {
+const addToServer = async (req: any, res: any) => {
   const { userId } = req.body;
   const { serverId } = req.params;
   const adminId = req.user;
@@ -67,36 +67,22 @@ const addToServer = async (req: any, res: Response) => {
     const foundUser = await User.findById(adminId);
     if (!foundUser)
       return res.status(400).json({ message: "Request User not found" });
-    let foundServer = await Server.findById(serverId);
+    const foundServer = await Server.findById(serverId);
 
     if (!foundServer)
       return res.status(400).json({ message: "Server not found" });
 
-    const isAdmin = foundServer.users.find(
-      (u: {
-        user: any;
-        roleId: {
-          Admin: number;
-        };
-      }) => {
-        if (u.user.toString() === adminId && u.roleId.Admin > 9000) {
-          return true;
-        }
+    const isAdmin = foundServer.users.find((u: any) => {
+      if (u.user.toString() === adminId && u.roleId.Admin > 9000) {
+        return true;
       }
-    );
+    });
     console.log("== IS ADMIN ==", isAdmin);
-    const isManager = foundServer.users.find(
-      (u: {
-        user: any;
-        roleId: {
-          Manager: number;
-        };
-      }) => {
-        if (u.user.toString() === adminId.toString() && u.roleId.Manager) {
-          return true;
-        }
+    const isManager = foundServer.users.find((u: any) => {
+      if (u.user.toString() === adminId.toString() && u.roleId.Manager) {
+        return true;
       }
-    );
+    });
     console.log("== IS MANAGER ==", isManager);
     if (Boolean(isAdmin) && Boolean(isManager))
       return res.status(403).json({
@@ -113,13 +99,7 @@ const addToServer = async (req: any, res: Response) => {
         type: "error",
       });
     const userAlreadyExists = foundServer.users.find(
-      (u: {
-        user: any;
-        roleId: {
-          Admin: number;
-          Manager: number;
-        };
-      }) => u.user.toString() == userId
+      (u: any) => u.user.toString() == userId
     );
     if (userAlreadyExists)
       return res.status(401).json({
@@ -137,7 +117,7 @@ const addToServer = async (req: any, res: Response) => {
       },
     });
     await foundServer.save();
-    let server = await Server.find({ _id: serverId })
+    const server = await Server.find({ _id: serverId })
       .populate("users")
       .populate("users")
       .populate({
@@ -171,7 +151,7 @@ const addToServer = async (req: any, res: Response) => {
   }
 };
 
-const getAllServersOfUser = async (req: any, res: Response) => {
+const getAllServersOfUser = async (req: any, res: any) => {
   try {
     const user = req.user;
     if (!user) {
@@ -203,7 +183,7 @@ const getAllServersOfUser = async (req: any, res: Response) => {
   }
 };
 
-const getServer = async (req: any, res: Response) => {
+const getServer = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
     const foundServer = await Server.findById(serverId)
@@ -223,20 +203,20 @@ const getServer = async (req: any, res: Response) => {
   }
 };
 
-const updateServer = async (req: any, res: Response) => {
+const updateServer = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
     const { serverName, serverDescription } = req.body;
     let image, image_url;
     if (req.file) {
-      image = getDataURI(req.file);
+      image = getDataURI(req.file) as any;
 
       image_url = await cloudinary.uploader.upload(image.content, {
         public_id: `CoWorkingSpace/${serverName}/profileImage`,
         overwrite: true,
       });
     }
-    let foundServer = await Server.find({ _id: serverId })
+    let foundServer = (await Server.find({ _id: serverId })
       .populate("users")
       .populate({
         path: "users",
@@ -244,13 +224,14 @@ const updateServer = async (req: any, res: Response) => {
           path: "user",
           model: "User",
         },
-      });
-    foundServer = foundServer[0];
+      })) as any;
+    foundServer = foundServer[0] as any;
     if (!foundServer) {
       return res.status(400).json({ message: "Server not found" });
     }
     const user = req.user;
     if (
+      // @ts-ignore
       !foundServer.users.find((u: any) => {
         return (
           (u.roleId.Admin > 9000 && u.user._id.toString() == user) ||
@@ -264,6 +245,7 @@ const updateServer = async (req: any, res: Response) => {
     }
     foundServer.serverName = serverName;
     foundServer.serverDescription = serverDescription;
+    // @ts-ignore
     if (req.file) foundServer.serverProfilePhoto = image_url.secure_url;
     if (req.file)
       await Server.findByIdAndUpdate(foundServer._id, {
@@ -289,7 +271,7 @@ const updateServer = async (req: any, res: Response) => {
   }
 };
 
-const deleteServer = async (req: any, res: Response) => {
+const deleteServer = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
     const foundServer = await Server.findById(serverId);
@@ -297,13 +279,14 @@ const deleteServer = async (req: any, res: Response) => {
       return res.status(400).json({ message: "Server not found" });
     }
     const user = req.user;
+    // @ts-ignore
     if (foundServer.admin.toString() !== user) {
       return res
         .status(400)
         .json({ message: "You are not authorized to delete this server" });
     }
     await Server.findByIdAndDelete(serverId);
-    const admin = await User.findById(user);
+    const admin = (await User.findById(user)) as any;
     admin.servers = admin.servers.filter(
       (s: { server: string; role: any }) => s.server.toString() !== serverId
     );
@@ -312,7 +295,7 @@ const deleteServer = async (req: any, res: Response) => {
   } catch (error) {}
 };
 
-const getAllServers = async (req: any, res: Response) => {
+const getAllServers = async (req: any, res: any) => {
   try {
     const { name } = req.query;
     console.log(name);
@@ -336,11 +319,11 @@ const getAllServers = async (req: any, res: Response) => {
   }
 };
 
-const promoteOrDemoteUser = async (req: any, res: Response) => {
+const promoteOrDemoteUser = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
     const { role, userId } = req.body;
-    let foundServer = await Server.find({ _id: serverId })
+    let foundServer = (await Server.find({ _id: serverId })
       .populate("users")
       .populate({
         path: "users",
@@ -348,8 +331,8 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
           path: "user",
           model: "User",
         },
-      });
-    foundServer = foundServer[0];
+      })) as any;
+    foundServer = foundServer[0] as any;
 
     if (!foundServer) {
       return res.status(400).json({ message: "Server not found" });
@@ -383,7 +366,7 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
     const promoteOrDemoteUser_Role = userToPromoteOrDemote[0].servers.find(
       (s: { server: any }) => s.server._id.toString() === serverId
     ).role.id;
-    let ourUser = await User.find({ _id: req.user })
+    let ourUser = (await User.find({ _id: req.user })
       .populate("servers")
       .populate({
         path: "servers",
@@ -391,7 +374,7 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
           path: "server",
           model: "Server",
         },
-      });
+      })) as any;
     ourUser = ourUser[0];
     if (userToPromoteOrDemote[0]._id.toString() === ourUser._id.toString()) {
       return res
@@ -500,9 +483,9 @@ const promoteOrDemoteUser = async (req: any, res: Response) => {
           server: foundServer,
         });
       }
-      //@ts-ignore
+      // @ts-ignore
 
-      //@ts-ignore
+      // @ts-ignore
       if (Object.keys(role)[0] == "Remove" && Object.values(role)[0] < 6000) {
         try {
           console.log("REACHED HERE 1");
@@ -684,4 +667,13 @@ module.exports = {
   deleteServer,
   promoteOrDemoteUser,
 };
-export {};
+export {
+  createServer,
+  addToServer,
+  getAllServersOfUser,
+  getServer,
+  updateServer,
+  getAllServers,
+  deleteServer,
+  promoteOrDemoteUser,
+};

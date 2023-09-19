@@ -1,23 +1,23 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import userRoutes from "../routes/user/User";
-import cookieParser from "cookie-parser";
-import http from "http";
-import { Server } from "socket.io";
-import { RoomHandler } from "./roomHandler";
-import connectToDatabase from "../utils/connectToDb";
-import cloudinary from "cloudinary";
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const userRoutes = require("../routes/user/User");
+const cookieParser = require("cookie-parser");
+const http = require("http");
+const { Server } = require("socket.io");
+const { RoomHandler } = require("./roomHandler");
+const connectToDatabase = require("../utils/connectToDb");
+const cloudinary = require("cloudinary");
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const channelRoutes = require("../routes/channels/channels.ts");
-const messageRoutes = require("../routes/messages/messages.ts");
-const authRoutes = require("../routes/auth/Auth.ts");
-const serverRoutes = require("../routes/server/Server.ts");
-//@ts-ignore
+const channelRoutes = require("../routes/channels/channels");
+const messageRoutes = require("../routes/messages/messages");
+const authRoutes = require("../routes/auth/Auth");
+const serverRoutes = require("../routes/server/Server");
+// @ts-ignore
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -164,7 +164,7 @@ app.use("/api/v1/server", serverRoutes);
 
 const start = async () => {
   try {
-    //@ts-ignore
+    // @ts-ignore
     await connectToDatabase(process.env.MONGO_URI);
     console.log("Connected to Database..!");
     server.listen(PORT);

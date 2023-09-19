@@ -1,9 +1,9 @@
-import { Response } from "express";
-
-require("dotenv").config();
-const User = require("../../models/userModal.ts");
 const jwt = require("jsonwebtoken");
-const handleRefreshToken = async (req: any, res: Response) => {
+const User = require("../../models/userModal");
+const dotenv = require("dotenv");
+dotenv.config();
+
+const handleRefreshToken = async (req: any, res: any) => {
   try {
     const cookies = req.cookies;
     if (!cookies?.refreshToken) {
@@ -24,7 +24,7 @@ const handleRefreshToken = async (req: any, res: Response) => {
     if (!foundUser) {
       jwt.verify(
         refreshToken,
-        process.env.REFRESH_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET!,
         async (err: any, user: any) => {
           if (err) {
             return res.status(403);
@@ -46,7 +46,7 @@ const handleRefreshToken = async (req: any, res: Response) => {
     );
     jwt.verify(
       refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
+      process.env.REFRESH_TOKEN_SECRET!,
       async (err: any, user: any) => {
         if (err) {
           foundUser.refreshToken = [...newRefreshTokenArray];
@@ -55,14 +55,14 @@ const handleRefreshToken = async (req: any, res: Response) => {
         }
         const accessToken = jwt.sign(
           { id: user.id },
-          process.env.ACCESS_TOKEN_SECRET,
+          process.env.ACCESS_TOKEN_SECRET!,
           {
             expiresIn: "30m",
           }
         );
         const newRefreshToken = jwt.sign(
           { id: user.id },
-          process.env.REFRESH_TOKEN_SECRET,
+          process.env.REFRESH_TOKEN_SECRET!,
           {
             expiresIn: "15d",
           }
@@ -83,4 +83,4 @@ const handleRefreshToken = async (req: any, res: Response) => {
   }
 };
 module.exports = { handleRefreshToken };
-export {};
+export { handleRefreshToken };

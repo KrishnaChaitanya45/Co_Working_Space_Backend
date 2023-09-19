@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema({
     createdAt: {
@@ -36,5 +35,6 @@ const UserSchema = new mongoose.Schema({
         default: "https://res.cloudinary.com/deardiary/image/upload/v1693221898/DearDiary/Habits/Login_mxzaj8.png",
     },
 });
-const User = mongoose.model("User", UserSchema);
-module.exports = User;
+const UserMod = mongoose.model("User", UserSchema);
+module.exports = UserMod;
+module.exports = UserMod;

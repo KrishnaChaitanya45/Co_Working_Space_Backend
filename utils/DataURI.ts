@@ -1,5 +1,5 @@
-const DataUriParser = require("datauri/parser");
-const path = require("path");
+import DataUriParser from "datauri/parser";
+import path from "path";
 const getDataURI = (file: any) => {
   const parser = new DataUriParser();
   return parser.format(path.extname(file.originalname).toString(), file.buffer);

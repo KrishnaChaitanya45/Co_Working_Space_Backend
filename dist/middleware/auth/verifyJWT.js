@@ -9,9 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.verifyJWT = void 0;
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-exports.verifyJWT = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const verifyJWT = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader) {
@@ -36,3 +37,4 @@ exports.verifyJWT = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         console.log(error);
     }
 });
+exports.verifyJWT = verifyJWT;

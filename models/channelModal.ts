@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const ChannelSchema = new mongoose.Schema({
   isTextChannel: {
     type: Boolean,

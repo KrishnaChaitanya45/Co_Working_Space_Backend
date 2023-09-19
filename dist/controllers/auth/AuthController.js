@@ -9,15 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const User = require("../../models/userModal.ts");
+exports.updateProfilePhoto = exports.getAllUsers = exports.resetPassword = exports.resendOTP = exports.verifyOTP = exports.logout = exports.register = exports.login = void 0;
+const User = require("../../models/userModal");
 const bcrypt = require("bcryptjs");
-require("dotenv").config();
-const UserOTPVerification = require("../../models/userOTPVerification.ts");
+const dotenv = require("dotenv");
+dotenv.config();
+const UserOTPVerification = require("../../models/userOTPVerification");
 const jwt = require("jsonwebtoken");
-const sendOTPVerificationEmail = require("../../utils/sendOTPVerificationEmail.ts");
-const { ObjectId } = require("mongodb");
-const getDataURI = require("../../utils/DataURI.ts");
-const cloudinary = require("cloudinary").v2;
+const sendOTPVerificationEmail = require("../../utils/sendOTPVerificationEmail");
+const getDataURI = require("../../utils/DataURI");
+const cloudinaryV2 = require("cloudinary");
+const cloudinary = cloudinaryV2.v2;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const cookies = req.cookies;
@@ -27,7 +29,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 .status(400)
                 .json({ message: "Please provide an email and password" });
         }
-        let user;
+        let user = undefined;
         user = yield User.findOne({ email: emailOrUsername });
         if (!user) {
             user = yield User.findOne({ username: emailOrUsername });
@@ -81,6 +83,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(error);
     }
 });
+exports.login = login;
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, displayname, password, username } = req.body;
@@ -103,6 +106,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             username,
         });
         try {
+            // @ts-ignore
             yield sendOTPVerificationEmail(email, newUser._id, displayname);
         }
         catch (error) { }
@@ -113,6 +117,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const refreshToken = jwt.sign({ id: newUser._id }, process.env.REFRESH_TOKEN_SECRET, {
             expiresIn: "15d",
         });
+        // @ts-ignore
         newUser.refreshToken = refreshToken;
         yield newUser.save();
         res.cookie("refreshToken", refreshToken, {
@@ -139,6 +144,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(error);
     }
 });
+exports.register = register;
 const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // TODO delete the accessToken from the client
@@ -166,6 +172,7 @@ const logout = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(error);
     }
 });
+exports.logout = logout;
 const verifyOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { otp, userId, forResetPassword, usernameOrEmail } = req.body;
@@ -196,6 +203,7 @@ const verifyOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         const { expiresAt } = userOTP;
         const hashedOTP = userOTP.otp;
+        // @ts-ignore
         if (Date.now() > expiresAt && !forResetPassword) {
             yield UserOTPVerification.deleteMany({
                 user: req.user ? req.user : userId,
@@ -204,6 +212,7 @@ const verifyOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 title: "OTP expired",
                 message: "Oops..! 😢, OTP time exhausted..! try to resend a new otp",
             });
+            // @ts-ignore
         }
         else if (Date.now() > expiresAt && forResetPassword) {
             yield UserOTPVerification.deleteMany({
@@ -215,6 +224,7 @@ const verifyOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         otp = otp.toString();
+        // @ts-ignore
         const validOTP = yield bcrypt.compare(otp, hashedOTP);
         console.log(validOTP);
         if (!validOTP) {
@@ -261,11 +271,10 @@ const verifyOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         console.log(error);
-        return res
-            .status(500)
-            .json({ message: "Internal server error", error });
+        return res.status(500).json({ message: "Internal server error", error });
     }
 });
+exports.verifyOTP = verifyOTP;
 const resendOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // @ts-ignore
     const id = req.user;
@@ -288,7 +297,7 @@ const resendOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     if (!user) {
         return res.status(400).json({
-            message: "The User credentials provided with the request are invalid..!",
+            message: "The User credentials provided with the any are invalid..!",
             title: "Invalid User Details",
         });
     }
@@ -301,7 +310,7 @@ const resendOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
     }
-    const subject = "Password Change Request ⭐";
+    const subject = "Password Change any ⭐";
     const message = "Here is your otp for verification for changing your password 😄";
     // @ts-ignore
     const userIdForReq = req.user != undefined ? req.user : userId;
@@ -312,6 +321,7 @@ const resendOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             message,
         };
         if (userIdForReq) {
+            // @ts-ignore
             yield sendOTPVerificationEmail(email, userIdForReq, displayname, body);
             return res.status(200).json({
                 title: "OTP sent successfully",
@@ -324,7 +334,9 @@ const resendOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 subject,
                 message,
             };
-            yield sendOTPVerificationEmail(email, userIdForReq, displayname, body, usernameOrEmail);
+            yield sendOTPVerificationEmail(
+            // @ts-ignore
+            email, userIdForReq, displayname, body, usernameOrEmail);
             return res.status(200).json({
                 title: "OTP sent successfully",
                 message: "We've resent a new otp to your email..!",
@@ -337,6 +349,7 @@ const resendOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(500).json({ message: "Internal server error" });
     }
 });
+exports.resendOTP = resendOTP;
 const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, password, confirmPassword } = req.body;
@@ -372,6 +385,7 @@ const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         return res.status(500).json({ message: "Internal server error" });
     }
 });
+exports.resetPassword = resetPassword;
 const updateProfilePhoto = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log("REQ USER ", req.user);
@@ -398,6 +412,24 @@ const updateProfilePhoto = (req, res) => __awaiter(void 0, void 0, void 0, funct
         return res.status(500).json({ message: "Internal server error" });
     }
 });
+exports.updateProfilePhoto = updateProfilePhoto;
+const getAllUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { username } = req.query;
+        const query = username
+            ? {
+                username: { $regex: username, $options: "i" },
+            }
+            : {};
+        const users = yield User.find(query).select("-password");
+        return res.status(200).json({ users });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal server error", error });
+    }
+});
+exports.getAllUsers = getAllUsers;
 module.exports = {
     login,
     register,
@@ -405,5 +437,6 @@ module.exports = {
     verifyOTP,
     resendOTP,
     resetPassword,
+    getAllUsers,
     updateProfilePhoto,
 };

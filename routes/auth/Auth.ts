@@ -1,5 +1,5 @@
-const e = require("express");
-const router = e.Router();
+const express = require("express");
+const router = express.Router();
 const {
   login,
   register,
@@ -8,11 +8,13 @@ const {
   resendOTP,
   getAllUsers,
   resetPassword,
-} = require("../../controllers/auth/AuthController.ts");
-const { verifyJWT } = require("../../middleware/auth/verifyJWT.ts");
+} = require("../../controllers/auth/AuthController");
+
+const { verifyJWT } = require("../../middleware/auth/verifyJWT");
 const {
   handleRefreshToken,
-} = require("../../controllers/auth/refreshTokenController.ts");
+} = require("../../controllers/auth/refreshTokenController");
+
 router.route("/login").post(login);
 router.route("/reset-password").post(resetPassword);
 router.route("/register").post(register);
@@ -22,4 +24,4 @@ router.route("/otp/verify").post(verifyOTP);
 router.route("/otp/resend").post(resendOTP);
 router.route("/token").get(handleRefreshToken);
 module.exports = router;
-export {};
+export = router;

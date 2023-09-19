@@ -1,8 +1,9 @@
 import { SentMessageInfo } from "nodemailer";
-const bcrypt = require("bcryptjs");
-require("dotenv").config();
-const nodemailer = require("nodemailer");
-const UserOTPVerification = require("../models/userOTPVerification.ts");
+import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+dotenv.config();
+import nodemailer from "nodemailer";
+import UserOTPVerification from "../models/userOTPVerification";
 const sendOTPVerificationEmail = async (
   email: string,
   user_id: string,
@@ -69,4 +70,4 @@ const sendOTPVerificationEmail = async (
 };
 
 module.exports = sendOTPVerificationEmail;
-export {};
+export = sendOTPVerificationEmail;

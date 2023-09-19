@@ -8,15 +8,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const bcrypt = require("bcryptjs");
-require("dotenv").config();
-const nodemailer = require("nodemailer");
-const UserOTPVerification = require("../models/userOTPVerification.ts");
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const userOTPVerification_1 = __importDefault(require("../models/userOTPVerification"));
 const sendOTPVerificationEmail = (email, user_id, user_name, body, usernameOrEmail) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const otp = `${1000 + Math.floor(Math.random() * 9000)}`;
-        const testAccount = yield nodemailer.createTestAccount();
+        const testAccount = yield nodemailer_1.default.createTestAccount();
         const config = {
             service: "gmail",
             auth: {
@@ -24,7 +27,7 @@ const sendOTPVerificationEmail = (email, user_id, user_name, body, usernameOrEma
                 pass: process.env.PASSWORD,
             },
         };
-        const transporter = nodemailer.createTransport(config);
+        const transporter = nodemailer_1.default.createTransport(config);
         const message = {
             from: "Co Working Space",
             to: email,
@@ -44,10 +47,10 @@ const sendOTPVerificationEmail = (email, user_id, user_name, body, usernameOrEma
                 return process.exit(1);
             }
             console.log("Message sent: %s", info.messageId);
-            console.log("Node Mailer Response", nodemailer.getTestMessageUrl(info));
-            const hashedOTP = yield bcrypt.hash(otp, 10);
+            console.log("Node Mailer Response", nodemailer_1.default.getTestMessageUrl(info));
+            const hashedOTP = yield bcryptjs_1.default.hash(otp, 10);
             if (!usernameOrEmail) {
-                const UserOTP = yield UserOTPVerification.create({
+                const UserOTP = yield userOTPVerification_1.default.create({
                     user: user_id,
                     otp: hashedOTP,
                     createdAt: Date.now(),
@@ -56,7 +59,7 @@ const sendOTPVerificationEmail = (email, user_id, user_name, body, usernameOrEma
                 yield UserOTP.save();
             }
             else {
-                const UserOTP = yield UserOTPVerification.create({
+                const UserOTP = yield userOTPVerification_1.default.create({
                     user: usernameOrEmail,
                     otp: hashedOTP,
                     createdAt: Date.now(),
@@ -70,4 +73,5 @@ const sendOTPVerificationEmail = (email, user_id, user_name, body, usernameOrEma
         console.log("MAIL SENDING FAILED", error);
     }
 });
+module.exports = sendOTPVerificationEmail;
 module.exports = sendOTPVerificationEmail;

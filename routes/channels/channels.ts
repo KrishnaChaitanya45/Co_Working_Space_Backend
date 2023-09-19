@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
-import { verifyJWT } from "../../middleware/auth/verifyJWT";
-//@ts-ignore
-import {
+const { verifyJWT } = require("../../middleware/auth/verifyJWT");
+// @ts-ignore
+const {
   getAllTextChannelsOfServer,
   createTextChannel,
   sendRequestToJoinChannel,
   fetchRequests,
   acceptOrReject,
-} from "../../controllers/channels/channels";
+} = require("../../controllers/channels/channels");
 router.route("/").post(verifyJWT, createTextChannel);
 router.route("/:serverId").get(verifyJWT, getAllTextChannelsOfServer);
 router

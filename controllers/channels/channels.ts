@@ -1,9 +1,8 @@
-import { Request, Response } from "express";
-import Server from "../../models/serverModal";
-import User from "../../models/userModal";
-import Channel from "../../models/channelModal";
-import getDataURI from "../../utils/DataURI";
-const createTextChannel = async (req: any, res: Response) => {
+const Server = require("../../models/serverModal");
+const User = require("../../models/userModal");
+const Channel = require("../../models/channelModal");
+const getDataURI = require("../../utils/DataURI");
+const createTextChannel = async (req: any, res: any) => {
   try {
     const {
       serverId,
@@ -14,14 +13,14 @@ const createTextChannel = async (req: any, res: Response) => {
       channelBackground,
     } = req.body;
 
-    //? BUSINESS LOGIC
-    //? 1. Check if the server exists
-    //? 2] To create a server the user must be the admin or the manager
-    //? 3] server can be restricted or public
-    //? 4] public channels can be joined by anyone and can be messaged by leads/ Managers/ Admins but can only be created by the manager or admin
-    //? 5] private channels can only be joined by the managers, leads and users but the channel can only be created by the admin and managers can join and leads, managers and admins can message and users needs to send the request to join the channel
+    // ? BUSINESS LOGIC
+    // ? 1. Check if the server exists
+    // ? 2] To create a server the user must be the admin or the manager
+    // ? 3] server can be restricted or public
+    // ? 4] public channels can be joined by anyone and can be messaged by leads/ Managers/ Admins but can only be created by the manager or admin
+    // ? 5] private channels can only be joined by the managers, leads and users but the channel can only be created by the admin and managers can join and leads, managers and admins can message and users needs to send the request to join the channel
 
-    //! IMPLEMENTATION : -
+    // ! IMPLEMENTATION : -
     if (!serverId || !channelName || !channelDescription) {
       return res.status(400).json({ message: "Please fill all the fields" });
     }
@@ -47,21 +46,14 @@ const createTextChannel = async (req: any, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
     console.log("=== SERVER ===", ourUser[0]._id);
-    const isAdmin = server[0].users.find(
-      (u: {
-        user: any;
-        roleId: {
-          Admin: number;
-        };
-      }) => {
-        if (
-          u.user._id.toString() === ourUser[0]._id.toString() &&
-          u.roleId.Admin > 9000
-        ) {
-          return true;
-        }
+    const isAdmin = server[0].users.find((u: any) => {
+      if (
+        u.user._id.toString() === ourUser[0]._id.toString() &&
+        u.roleId.Admin > 9000
+      ) {
+        return true;
       }
-    );
+    });
     console.log("== IS ADMIN ==", isAdmin);
     if (restrictAccess && !isAdmin) {
       return res.status(403).json({
@@ -70,21 +62,14 @@ const createTextChannel = async (req: any, res: Response) => {
         type: "error",
       });
     }
-    const isManager = server[0].users.find(
-      (u: {
-        user: any;
-        roleId: {
-          Manager: number;
-        };
-      }) => {
-        if (
-          u.user._id.toString() === ourUser[0]._id.toString() &&
-          u.roleId.Manager
-        ) {
-          return true;
-        }
+    const isManager = server[0].users.find((u: any) => {
+      if (
+        u.user._id.toString() === ourUser[0]._id.toString() &&
+        u.roleId.Manager
+      ) {
+        return true;
       }
-    );
+    });
     console.log("== IS MANAGER ==", isManager);
     if (!isAdmin && !isManager) {
       return res.status(403).json({
@@ -112,6 +97,7 @@ const createTextChannel = async (req: any, res: Response) => {
     createChannel.users.push({
       user: ourUser[0]._id,
       roleId: {
+        // @ts-ignore
         Admin: Object.values(isAdmin.roleId)[0],
       },
     });
@@ -121,7 +107,7 @@ const createTextChannel = async (req: any, res: Response) => {
       textChannels: server[0].textChannels,
     });
 
-    let serverToRespond = await Server.find({ _id: server[0]._id })
+    const serverToRespond = await Server.find({ _id: server[0]._id })
       .populate({
         path: "textChannels",
         model: "Channel",
@@ -132,7 +118,7 @@ const createTextChannel = async (req: any, res: Response) => {
         model: "User",
         select: "-password",
       });
-    let channelToRespond = await Channel.find({ _id: createChannel._id })
+    const channelToRespond = await Channel.find({ _id: createChannel._id })
       .populate("users")
       .populate({
         path: "users.user",
@@ -152,9 +138,9 @@ const createTextChannel = async (req: any, res: Response) => {
   }
 };
 
-const addUsersToChannel = async (req: Request, res: Response) => {};
+const addUsersToChannel = async (req: any, res: any) => {};
 
-const getAllTextChannelsOfServer = async (req: Request, res: Response) => {
+const getAllTextChannelsOfServer = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
     if (!serverId) {
@@ -189,15 +175,15 @@ const getAllTextChannelsOfServer = async (req: Request, res: Response) => {
   }
 };
 
-const createVoiceChannel = async (req: Request, res: Response) => {};
+const createVoiceChannel = async (req: any, res: any) => {};
 
-const createVideoChannel = async (req: Request, res: Response) => {};
+const createVideoChannel = async (req: any, res: any) => {};
 
-const createStreamChannel = async (req: Request, res: Response) => {};
+const createStreamChannel = async (req: any, res: any) => {};
 
-const deleteChannel = async (req: Request, res: Response) => {};
+const deleteChannel = async (req: any, res: any) => {};
 
-const sendRequestToJoinChannel = async (req: any, res: Response) => {
+const sendRequestToJoinChannel = async (req: any, res: any) => {
   try {
     const { message, userId } = req.body;
     const { channelId } = req.params;
@@ -279,7 +265,7 @@ const sendRequestToJoinChannel = async (req: any, res: Response) => {
         select: "-password",
       });
     console.log("== FIND REQUEST ==", channelsWithRequests[0]);
-    let findRequest = channelsWithRequests[0].requests.find((r: any) => {
+    const findRequest = channelsWithRequests[0].requests.find((r: any) => {
       if (r.user._id.toString() === user[0]._id.toString()) {
         return true;
       }
@@ -303,7 +289,7 @@ const sendRequestToJoinChannel = async (req: any, res: Response) => {
   }
 };
 
-const fetchRequests = async (req: any, res: Response) => {
+const fetchRequests = async (req: any, res: any) => {
   try {
     const { channelId } = req.params;
     console.log("== CHANNEL ID ==", channelId);
@@ -333,6 +319,7 @@ const fetchRequests = async (req: any, res: Response) => {
         model: "Server",
       });
     const Server = ourUser[0].servers.find((s: any) => {
+      // @ts-ignore
       if (s.server.toString() === channel[0].belongsToServer._id.toString()) {
         return true;
       }
@@ -398,7 +385,7 @@ const fetchRequests = async (req: any, res: Response) => {
   }
 };
 
-const acceptOrReject = async (req: any, res: Response) => {
+const acceptOrReject = async (req: any, res: any) => {
   try {
     const { requestId, channelId, action, userId } = req.body;
     if (!req.user) {
@@ -437,7 +424,7 @@ const acceptOrReject = async (req: any, res: Response) => {
     }
     const user = await User.find({ _id: userId }).select("-password");
     if (action > 5000) {
-      //accept request
+      // accept request
       if (!user) {
         return res.status(404).json({
           title: "User not found",
@@ -458,6 +445,7 @@ const acceptOrReject = async (req: any, res: Response) => {
         });
       }
       let serverRole = user[0].servers.find((s: any) => {
+        // @ts-ignore
         if (s.server.toString() === channel[0].belongsToServer.toString()) {
           return true;
         }
@@ -513,7 +501,7 @@ const acceptOrReject = async (req: any, res: Response) => {
         requests: channel[0].requests,
       });
     } else {
-      //reject request
+      // reject request
       channel[0].requests = channel[0].requests.filter((r: any) => {
         if (r._id.toString() !== requestId) {
           return true;

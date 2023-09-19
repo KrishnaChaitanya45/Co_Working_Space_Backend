@@ -2,7 +2,6 @@ const {
   getMessages,
   sendMessage,
 } = require("../../controllers/messages/messages");
-
 const express = require("express");
 const router = express.Router();
 const { verifyJWT } = require("../../middleware/auth/verifyJWT");

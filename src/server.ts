@@ -33,6 +33,8 @@ app.use(
 
 const users: any = {};
 const socketToRoom: any = {};
+const audioCallUsers: any = {};
+const socketToRoomAudio: any = {};
 
 app.use(express.json());
 app.use(cookieParser());
@@ -120,39 +122,75 @@ RealTimeUpdates.on("connection", (socket: any) => {
 });
 
 callsAndChats.on("connection", (socket: any) => {
-  console.log("USER CONNECTED", socket.id);
-
   socket.on("join-room", (roomID: any) => {
     socket.join(roomID);
     console.log("ROOM ID", roomID);
   });
-
-  socket.on("send-message", (payload: any) => {
-    console.log("MESSAGE RECEIVED", payload);
-    socket.to(payload.channelId).emit("message-received", payload);
+  socket.on("join-mesh-audio-call", ({ channelId, userId }: any) => {
+    console.log("USER JOINED", channelId, userId);
+    socket.join(channelId);
+    if (audioCallUsers[channelId]) {
+      const length = audioCallUsers[channelId].length;
+      if (length === 4) {
+        console.log("ROOM FULL");
+        socket.emit("room full");
+        return;
+      }
+      if (
+        audioCallUsers &&
+        audioCallUsers.length > 0 &&
+        audioCallUsers.find((user: any) => user.userId === userId)
+      ) {
+        console.log("USER ALREADY IN ROOM");
+        return;
+      }
+      audioCallUsers[channelId].push({ userId, socketId: socket.id });
+    } else {
+      audioCallUsers[channelId] = [{ userId, socketId: socket.id }];
+    }
+    socketToRoom[userId] = channelId;
+    const audioCallUsersInThisRoomWithOtherProperties = audioCallUsers[
+      channelId
+    ].filter((id: any) => {
+      return id.userId !== userId;
+    });
+    const audioCallUsersInThisRoom = [] as any;
+    audioCallUsersInThisRoomWithOtherProperties.map((id: any) => {
+      audioCallUsersInThisRoom.push(id.userId);
+    });
+    console.log("USERS IN THIS ROOM SENDING", audioCallUsersInThisRoom);
+    console.log("USERS IN THIS ROOM", audioCallUsers);
+    socket.emit("all-users-in-audio-call", audioCallUsersInThisRoom);
   });
 
-  socket.on("sending signal", (payload: any) => {
-    io.to(payload.userToSignal).emit("user joined", {
+  socket.on("sending signal-audio", (payload: any) => {
+    console.log("SENDING SIGNAL", payload);
+    socket.to(payload.userToSignal).emit("user-joined-audio", {
       signal: payload.signal,
+      userDet: payload.userDet,
       callerID: payload.callerID,
     });
   });
 
-  socket.on("returning signal", (payload: any) => {
-    io.to(payload.callerID).emit("receiving returned signal", {
+  socket.on("returning signal-audio", (payload: any) => {
+    socket.to(payload.callerID).emit("receiving returned signal-audio", {
       signal: payload.signal,
+      userDet: payload.userDet,
       id: socket.id,
     });
   });
 
   socket.on("disconnect", () => {
     const roomID = socketToRoom[socket.id];
-    let room = users[roomID];
+    let room = audioCallUsers[roomID];
     if (room) {
-      room = room.filter((id: any) => id !== socket.id);
-      users[roomID] = room;
+      room = room.filter((id: any) => id.socketId !== socket.id);
+      audioCallUsers[roomID] = room;
     }
+  });
+  socket.on("send-message", (payload: any) => {
+    console.log("MESSAGE RECEIVED", payload);
+    socket.to(payload.channelId).emit("message-received", payload);
   });
 });
 

@@ -4,12 +4,12 @@ const { verifyJWT } = require("../../middleware/auth/verifyJWT");
 // @ts-ignore
 const {
   getAllTextChannelsOfServer,
-  createTextChannel,
+  createChannel,
   sendRequestToJoinChannel,
   fetchRequests,
   acceptOrReject,
 } = require("../../controllers/channels/channels");
-router.route("/").post(verifyJWT, createTextChannel);
+router.route("/").post(verifyJWT, createChannel);
 router.route("/:serverId").get(verifyJWT, getAllTextChannelsOfServer);
 router
   .route("/:channelId/requests")

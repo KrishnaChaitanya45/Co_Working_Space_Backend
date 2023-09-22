@@ -2,7 +2,7 @@ const Server = require("../../models/serverModal");
 const User = require("../../models/userModal");
 const Channel = require("../../models/channelModal");
 const getDataURI = require("../../utils/DataURI");
-const createTextChannel = async (req: any, res: any) => {
+const createChannel = async (req: any, res: any) => {
   try {
     const {
       serverId,
@@ -12,7 +12,7 @@ const createTextChannel = async (req: any, res: any) => {
       channelIcon,
       channelBackground,
     } = req.body;
-
+    const { type } = req.query;
     // ? BUSINESS LOGIC
     // ? 1. Check if the server exists
     // ? 2] To create a server the user must be the admin or the manager
@@ -78,12 +78,29 @@ const createTextChannel = async (req: any, res: any) => {
         type: "error",
       });
     }
-    const createChannel = await Channel.create({
-      channelName,
-      channelDescription,
-      belongsToServer: server[0]._id,
-      isTextChannel: true,
-    });
+    let createChannel;
+    if (type == "text" || type == undefined) {
+      createChannel = await Channel.create({
+        channelName,
+        channelDescription,
+        belongsToServer: server[0]._id,
+        isTextChannel: true,
+      });
+    } else if (type == "video") {
+      createChannel = await Channel.create({
+        channelName,
+        channelDescription,
+        belongsToServer: server[0]._id,
+        isVideoChannel: true,
+      });
+    } else {
+      createChannel = await Channel.create({
+        channelName,
+        channelDescription,
+        belongsToServer: server[0]._id,
+        isAudioChannel: true,
+      });
+    }
     if (!createChannel) {
       return res.status(500).json({
         title: "Something went wrong",
@@ -102,10 +119,22 @@ const createTextChannel = async (req: any, res: any) => {
       },
     });
     await createChannel.save();
-    server[0].textChannels.push(createChannel._id);
-    await Server.findByIdAndUpdate(server[0]._id, {
-      textChannels: server[0].textChannels,
-    });
+    if (type == "text" || type == undefined) {
+      server[0].textChannels.push(createChannel._id);
+      await Server.findByIdAndUpdate(server[0]._id, {
+        textChannels: server[0].textChannels,
+      });
+    } else if (type == "video") {
+      server[0].videoChannels.push(createChannel._id);
+      await Server.findByIdAndUpdate(server[0]._id, {
+        videoChannels: server[0].videoChannels,
+      });
+    } else {
+      server[0].audioChannels.push(createChannel._id);
+      await Server.findByIdAndUpdate(server[0]._id, {
+        audioChannels: server[0].audioChannels,
+      });
+    }
 
     const serverToRespond = await Server.find({ _id: server[0]._id })
       .populate({
@@ -135,6 +164,11 @@ const createTextChannel = async (req: any, res: any) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      title: "Something went wrong",
+      message: "there is an issue from our side ..! we'll fix it soon.>!",
+      type: "error",
+    });
   }
 };
 
@@ -143,10 +177,20 @@ const addUsersToChannel = async (req: any, res: any) => {};
 const getAllTextChannelsOfServer = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
+    const { type } = req.query;
+    let filter = { isTextChannel: true } as any;
+    if (type == "video") {
+      filter = { isVideoChannel: true };
+    } else if (type == "audio") {
+      filter = { isAudioChannel: true };
+    }
     if (!serverId) {
       return res.status(400).json({ message: "Please fill all the fields" });
     }
-    const channels = await Channel.find({ belongsToServer: serverId })
+    const channels = await Channel.find({
+      belongsToServer: serverId,
+      ...filter,
+    })
       .populate("users")
       .populate({
         path: "users.user",
@@ -175,7 +219,25 @@ const getAllTextChannelsOfServer = async (req: any, res: any) => {
   }
 };
 
-const createVoiceChannel = async (req: any, res: any) => {};
+const createVoiceChannel = async (req: any, res: any) => {
+  try {
+    const {
+      serverId,
+      channelName,
+      restrictAccess,
+      channelDescription,
+      channelIcon,
+      channelBackground,
+    } = req.body;
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      title: "Something went wrong",
+      message: "there is an issue from our side ..! we'll fix it soon.>!",
+      type: "error",
+    });
+  }
+};
 
 const createVideoChannel = async (req: any, res: any) => {};
 
@@ -550,7 +612,7 @@ const acceptOrReject = async (req: any, res: any) => {
   }
 };
 export {
-  createTextChannel,
+  createChannel,
   addUsersToChannel,
   createVoiceChannel,
   createVideoChannel,

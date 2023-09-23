@@ -3,8 +3,8 @@ const express = require("express");
 const router = express.Router();
 const { verifyJWT } = require("../../middleware/auth/verifyJWT");
 // @ts-ignore
-const { getAllTextChannelsOfServer, createTextChannel, sendRequestToJoinChannel, fetchRequests, acceptOrReject, } = require("../../controllers/channels/channels");
-router.route("/").post(verifyJWT, createTextChannel);
+const { getAllTextChannelsOfServer, createChannel, sendRequestToJoinChannel, fetchRequests, acceptOrReject, } = require("../../controllers/channels/channels");
+router.route("/").post(verifyJWT, createChannel);
 router.route("/:serverId").get(verifyJWT, getAllTextChannelsOfServer);
 router
     .route("/:channelId/requests")

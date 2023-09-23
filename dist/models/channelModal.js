@@ -5,6 +5,14 @@ const ChannelSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    isAudioChannel: {
+        type: Boolean,
+        default: false,
+    },
+    isVideoChannel: {
+        type: Boolean,
+        default: false,
+    },
     restrictAccess: {
         type: Boolean,
         default: false,

@@ -11,8 +11,18 @@ const ServerSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
         },
     ],
-    videoChannels: [{}],
-    audioChannels: [{}],
+    videoChannels: [
+        {
+            ref: "Channel",
+            type: mongoose.Schema.Types.ObjectId,
+        },
+    ],
+    audioChannels: [
+        {
+            ref: "Channel",
+            type: mongoose.Schema.Types.ObjectId,
+        },
+    ],
     serverName: {
         type: String,
         required: true,

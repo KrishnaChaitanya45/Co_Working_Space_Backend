@@ -9,14 +9,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.acceptOrReject = exports.fetchRequests = exports.deleteChannel = exports.getAllTextChannelsOfServer = exports.sendRequestToJoinChannel = exports.createStreamChannel = exports.createVideoChannel = exports.createVoiceChannel = exports.addUsersToChannel = exports.createTextChannel = void 0;
+exports.acceptOrReject = exports.fetchRequests = exports.deleteChannel = exports.getAllTextChannelsOfServer = exports.sendRequestToJoinChannel = exports.createStreamChannel = exports.createVideoChannel = exports.createVoiceChannel = exports.addUsersToChannel = exports.createChannel = void 0;
 const Server = require("../../models/serverModal");
 const User = require("../../models/userModal");
 const Channel = require("../../models/channelModal");
 const getDataURI = require("../../utils/DataURI");
-const createTextChannel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createChannel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { serverId, channelName, restrictAccess, channelDescription, channelIcon, channelBackground, } = req.body;
+        const { type } = req.query;
         // ? BUSINESS LOGIC
         // ? 1. Check if the server exists
         // ? 2] To create a server the user must be the admin or the manager
@@ -75,12 +76,37 @@ const createTextChannel = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 type: "error",
             });
         }
-        const createChannel = yield Channel.create({
-            channelName,
-            channelDescription,
-            belongsToServer: server[0]._id,
-            isTextChannel: true,
-        });
+        let createChannel;
+        if (type == "text" || type == undefined) {
+            createChannel = yield Channel.create({
+                channelName,
+                channelDescription,
+                belongsToServer: server[0]._id,
+                isTextChannel: true,
+                isAudioChannel: false,
+                isVideoChannel: false,
+            });
+        }
+        else if (type == "video") {
+            createChannel = yield Channel.create({
+                channelName,
+                channelDescription,
+                belongsToServer: server[0]._id,
+                isVideoChannel: true,
+                isAudioChannel: false,
+                isTextChannel: false,
+            });
+        }
+        else {
+            createChannel = yield Channel.create({
+                channelName,
+                channelDescription,
+                belongsToServer: server[0]._id,
+                isAudioChannel: true,
+                isVideoChannel: false,
+                isTextChannel: false,
+            });
+        }
         if (!createChannel) {
             return res.status(500).json({
                 title: "Something went wrong",
@@ -99,10 +125,24 @@ const createTextChannel = (req, res) => __awaiter(void 0, void 0, void 0, functi
             },
         });
         yield createChannel.save();
-        server[0].textChannels.push(createChannel._id);
-        yield Server.findByIdAndUpdate(server[0]._id, {
-            textChannels: server[0].textChannels,
-        });
+        if (type == "text" || type == undefined) {
+            server[0].textChannels.push(createChannel._id);
+            yield Server.findByIdAndUpdate(server[0]._id, {
+                textChannels: server[0].textChannels,
+            });
+        }
+        else if (type == "video") {
+            server[0].videoChannels.push(createChannel._id);
+            yield Server.findByIdAndUpdate(server[0]._id, {
+                videoChannels: server[0].videoChannels,
+            });
+        }
+        else {
+            server[0].audioChannels.push(createChannel._id);
+            yield Server.findByIdAndUpdate(server[0]._id, {
+                audioChannels: server[0].audioChannels,
+            });
+        }
         const serverToRespond = yield Server.find({ _id: server[0]._id })
             .populate({
             path: "textChannels",
@@ -132,18 +172,43 @@ const createTextChannel = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
     catch (error) {
         console.log(error);
+        return res.status(500).json({
+            title: "Something went wrong",
+            message: "there is an issue from our side ..! we'll fix it soon.>!",
+            type: "error",
+        });
     }
 });
-exports.createTextChannel = createTextChannel;
+exports.createChannel = createChannel;
 const addUsersToChannel = (req, res) => __awaiter(void 0, void 0, void 0, function* () { });
 exports.addUsersToChannel = addUsersToChannel;
 const getAllTextChannelsOfServer = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { serverId } = req.params;
+        const { type } = req.query;
+        let filter = {
+            isTextChannel: true,
+            isAudioChannel: false,
+            isVideoChannel: false,
+        };
+        if (type == "video") {
+            filter = {
+                isVideoChannel: true,
+                isAudioChannel: false,
+                isTextChannel: false,
+            };
+        }
+        else if (type == "audio") {
+            filter = {
+                isAudioChannel: true,
+                isVideoChannel: false,
+                isTextChannel: false,
+            };
+        }
         if (!serverId) {
             return res.status(400).json({ message: "Please fill all the fields" });
         }
-        const channels = yield Channel.find({ belongsToServer: serverId })
+        const channels = yield Channel.find(Object.assign({ belongsToServer: serverId }, filter))
             .populate("users")
             .populate({
             path: "users.user",
@@ -173,7 +238,19 @@ const getAllTextChannelsOfServer = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getAllTextChannelsOfServer = getAllTextChannelsOfServer;
-const createVoiceChannel = (req, res) => __awaiter(void 0, void 0, void 0, function* () { });
+const createVoiceChannel = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { serverId, channelName, restrictAccess, channelDescription, channelIcon, channelBackground, } = req.body;
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            title: "Something went wrong",
+            message: "there is an issue from our side ..! we'll fix it soon.>!",
+            type: "error",
+        });
+    }
+});
 exports.createVoiceChannel = createVoiceChannel;
 const createVideoChannel = (req, res) => __awaiter(void 0, void 0, void 0, function* () { });
 exports.createVideoChannel = createVideoChannel;

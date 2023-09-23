@@ -31,12 +31,14 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-app.use(cors({
-    origin: ["http://localhost:3000"],
-    credentials: true,
-}));
 const users = {};
 const socketToRoom = {};
+const audioCallUsers = {};
+const socketToRoomAudio = {};
+app.use(cors({
+    origin: "https://co-working-space-frontend.vercel.app",
+    credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 const server = http.createServer(app);
@@ -108,34 +110,69 @@ RealTimeUpdates.on("connection", (socket) => {
     });
 });
 callsAndChats.on("connection", (socket) => {
-    console.log("USER CONNECTED", socket.id);
     socket.on("join-room", (roomID) => {
         socket.join(roomID);
         console.log("ROOM ID", roomID);
     });
-    socket.on("send-message", (payload) => {
-        console.log("MESSAGE RECEIVED", payload);
-        socket.to(payload.channelId).emit("message-received", payload);
+    socket.on("join-mesh-audio-call", ({ channelId, userId }) => {
+        console.log("USER JOINED", channelId, userId);
+        socket.join(channelId);
+        if (audioCallUsers[channelId]) {
+            const length = audioCallUsers[channelId].length;
+            if (length === 4) {
+                console.log("ROOM FULL");
+                socket.emit("room full");
+                return;
+            }
+            if (audioCallUsers &&
+                audioCallUsers.length > 0 &&
+                audioCallUsers.find((user) => user.userId === userId)) {
+                console.log("USER ALREADY IN ROOM");
+                return;
+            }
+            audioCallUsers[channelId].push({ userId, socketId: socket.id });
+        }
+        else {
+            audioCallUsers[channelId] = [{ userId, socketId: socket.id }];
+        }
+        socketToRoom[userId] = channelId;
+        const audioCallUsersInThisRoomWithOtherProperties = audioCallUsers[channelId].filter((id) => {
+            return id.userId !== userId;
+        });
+        const audioCallUsersInThisRoom = [];
+        audioCallUsersInThisRoomWithOtherProperties.map((id) => {
+            audioCallUsersInThisRoom.push(id.userId);
+        });
+        console.log("USERS IN THIS ROOM SENDING", audioCallUsersInThisRoom);
+        console.log("USERS IN THIS ROOM", audioCallUsers);
+        socket.emit("all-users-in-audio-call", audioCallUsersInThisRoom);
     });
-    socket.on("sending signal", (payload) => {
-        io.to(payload.userToSignal).emit("user joined", {
+    socket.on("sending signal-audio", (payload) => {
+        console.log("SENDING SIGNAL", payload);
+        socket.to(payload.userToSignal).emit("user-joined-audio", {
             signal: payload.signal,
+            userDet: payload.userDet,
             callerID: payload.callerID,
         });
     });
-    socket.on("returning signal", (payload) => {
-        io.to(payload.callerID).emit("receiving returned signal", {
+    socket.on("returning signal-audio", (payload) => {
+        socket.to(payload.callerID).emit("receiving returned signal-audio", {
             signal: payload.signal,
+            userDet: payload.userDet,
             id: socket.id,
         });
     });
     socket.on("disconnect", () => {
         const roomID = socketToRoom[socket.id];
-        let room = users[roomID];
+        let room = audioCallUsers[roomID];
         if (room) {
-            room = room.filter((id) => id !== socket.id);
-            users[roomID] = room;
+            room = room.filter((id) => id.socketId !== socket.id);
+            audioCallUsers[roomID] = room;
         }
+    });
+    socket.on("send-message", (payload) => {
+        console.log("MESSAGE RECEIVED", payload);
+        socket.to(payload.channelId).emit("message-received", payload);
     });
 });
 app.use("/api/v1/auth", authRoutes);

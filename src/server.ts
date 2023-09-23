@@ -24,15 +24,22 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://co-working-space-frontend.vercel.app/",
-    ],
-    credentials: true,
-  })
-);
+var whitelist = [
+  "http://localhost:3000",
+  "https://co-working-space-frontend.vercel.app/",
+];
+var corsOptions = {
+  origin: function (origin: any, callback: any) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 const users: any = {};
 const socketToRoom: any = {};

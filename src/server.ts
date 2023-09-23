@@ -26,7 +26,7 @@ cloudinary.config({
 
 var whitelist = [
   "http://localhost:3000",
-  "https://co-working-space-frontend.vercel.app/",
+  "https://co-working-space-frontend.vercel.app",
 ];
 var corsOptions = {
   origin: function (origin: any, callback: any) {

@@ -24,17 +24,20 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-app.use(
-  cors({
-    credentials: true,
-  })
-);
-
 const users: any = {};
 const socketToRoom: any = {};
 const audioCallUsers: any = {};
 const socketToRoomAudio: any = {};
 
+app.use(
+  cors({
+    origin: [
+      "https://co-working-space-frontend.vercel.app",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 

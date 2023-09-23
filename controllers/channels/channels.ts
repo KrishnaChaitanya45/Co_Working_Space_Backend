@@ -85,6 +85,8 @@ const createChannel = async (req: any, res: any) => {
         channelDescription,
         belongsToServer: server[0]._id,
         isTextChannel: true,
+        isAudioChannel: false,
+        isVideoChannel: false,
       });
     } else if (type == "video") {
       createChannel = await Channel.create({
@@ -92,6 +94,8 @@ const createChannel = async (req: any, res: any) => {
         channelDescription,
         belongsToServer: server[0]._id,
         isVideoChannel: true,
+        isAudioChannel: false,
+        isTextChannel: false,
       });
     } else {
       createChannel = await Channel.create({
@@ -99,6 +103,8 @@ const createChannel = async (req: any, res: any) => {
         channelDescription,
         belongsToServer: server[0]._id,
         isAudioChannel: true,
+        isVideoChannel: false,
+        isTextChannel: false,
       });
     }
     if (!createChannel) {
@@ -178,11 +184,23 @@ const getAllTextChannelsOfServer = async (req: any, res: any) => {
   try {
     const { serverId } = req.params;
     const { type } = req.query;
-    let filter = { isTextChannel: true } as any;
+    let filter = {
+      isTextChannel: true,
+      isAudioChannel: false,
+      isVideoChannel: false,
+    } as any;
     if (type == "video") {
-      filter = { isVideoChannel: true };
+      filter = {
+        isVideoChannel: true,
+        isAudioChannel: false,
+        isTextChannel: false,
+      };
     } else if (type == "audio") {
-      filter = { isAudioChannel: true };
+      filter = {
+        isAudioChannel: true,
+        isVideoChannel: false,
+        isTextChannel: false,
+      };
     }
     if (!serverId) {
       return res.status(400).json({ message: "Please fill all the fields" });

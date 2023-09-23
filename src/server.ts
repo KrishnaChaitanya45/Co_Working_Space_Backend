@@ -26,7 +26,10 @@ cloudinary.config({
 
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: [
+      "http://localhost:3000",
+      "https://co-working-space-frontend.vercel.app/",
+    ],
     credentials: true,
   })
 );

@@ -31,7 +31,10 @@ const socketToRoomAudio: any = {};
 
 app.use(
   cors({
-    origin: "https://co-working-space-frontend.vercel.app",
+    origin: [
+      "https://co-working-space-frontend.vercel.app",
+      "http://localhost:3000",
+    ],
     credentials: true,
   })
 );
@@ -164,7 +167,7 @@ callsAndChats.on("connection", (socket: any) => {
 
   socket.on("sending signal-audio", (payload: any) => {
     console.log("SENDING SIGNAL", payload);
-    socket.to(payload.userToSignal).emit("user-joined-audio", {
+    socket.to(payload.channelId).emit("user-joined-audio", {
       signal: payload.signal,
       userDet: payload.userDet,
       callerID: payload.callerID,
@@ -172,20 +175,37 @@ callsAndChats.on("connection", (socket: any) => {
   });
 
   socket.on("returning signal-audio", (payload: any) => {
-    socket.to(payload.callerID).emit("receiving returned signal-audio", {
+    socket.to(payload.channelId).emit("receiving returned signal-audio", {
       signal: payload.signal,
       userDet: payload.userDet,
       id: socket.id,
     });
   });
 
-  socket.on("disconnect", () => {
-    const roomID = socketToRoom[socket.id];
-    let room = audioCallUsers[roomID];
+  socket.on("leave-mesh-audio-call", ({ userId, channelId }: any) => {
+    console.log(
+      "=== DISCONNECT HANDLER ===",
+      userId,
+      "=== CHANNEL ID ===",
+      channelId
+    );
+    let room = audioCallUsers[channelId];
+    console.log("=== ROOM ===", room);
     if (room) {
-      room = room.filter((id: any) => id.socketId !== socket.id);
-      audioCallUsers[roomID] = room;
+      room = room.filter((id: any) => id.userId != userId);
+      audioCallUsers[channelId] = room;
+      console.log("=== ROOM AFTER LEAVING ===", audioCallUsers);
+      socket.to(channelId).emit("user-left-audio-room", { userId, channelId });
     }
+    // const roomID = socketToRoom[socket.id];
+    // let room = audioCallUsers[roomID];
+    // if (room) {
+    //   room = room.filter((id: any) => id.socketId !== socket.id);
+    //   audioCallUsers[roomID] = room;
+    // }
+  });
+  socket.on("disconnect", () => {
+    console.log("=== DISCONNECTED ===", socket.id);
   });
   socket.on("send-message", (payload: any) => {
     console.log("MESSAGE RECEIVED", payload);

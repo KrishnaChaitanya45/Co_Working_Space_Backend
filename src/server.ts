@@ -31,8 +31,10 @@ const socketToRoomAudio: any = {};
 
 app.use(
   cors({
-    origin: "https://co-working-space.vercel.app",
-
+    origin: [
+      "https://co-working-space.vercel.app",
+      "https://co-working-space-frontend.vercel.app",
+    ],
     credentials: true,
   })
 );
